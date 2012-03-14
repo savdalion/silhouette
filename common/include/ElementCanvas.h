@@ -11,6 +11,12 @@ namespace siu {
 */
 struct ElementCanvas {
 
+    /**
+    * Тип обобщённого идентификатора элемента.
+    */
+    typedef size_t cid_t;
+
+
     inline ElementCanvas() {
     }
 
@@ -26,7 +32,7 @@ struct ElementCanvas {
     /**
     * @return Обобщённый идентификатор элемента.
     */
-    virtual size_t cid() const = 0;
+    virtual cid_t cid() const = 0;
 
 };
 

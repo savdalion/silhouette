@@ -31,7 +31,7 @@ struct SolidEC : public ElementCanvas {
     /**
     * @see ElementCanvas
     */
-    inline virtual size_t cid() const {
+    inline virtual cid_t cid() const {
         boost::hash< uidMatter_t >  hash;
         return hash( matter );
     }

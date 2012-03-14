@@ -36,6 +36,19 @@ struct EllipsoidES : public PhysicsSolidES {
     /**
     * @see PhysicsSolidES
     */
+    virtual psize_t psize() const {
+        return psize_t(
+            rx * 2.0,
+            ry * 2.0,
+            rz * 2.0
+        );
+    }
+
+
+
+    /**
+    * @see PhysicsSolidES
+    */
     inline virtual double mass() const {
         return density * volume();
     }

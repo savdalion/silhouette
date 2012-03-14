@@ -6,93 +6,41 @@ namespace siu {
 
 /**
 * Координаты.
-* Введены для позициционирования элемента в эскизе.
+* Введены для позициционирования элемента в эскизе, позиционирования
+* холста относительно горизонта и т.п..
 *
 * @see IntegerRelativeCoord
 */
-class RelativeCoord {
-public:
-    inline RelativeCoord(
+template< size_t K = 3 >
+struct RelativeCoord {
+
+    /**
+    * Горизонт: потолок.
+    * Координаты указываются относительно центра этого горизонта.
+    */
+    const int hCeil;
+
+    /**
+    * 3D-координата с точностью 'double'.
+    */
+    const double x;
+    const double y;
+    const double z;
+
+
+
+    explicit inline RelativeCoord(
         // Достаточно верхнего горизонта: координата задаётся типом 'double'.
         // Т.о. границы эскиза не хранятся в относительной координате, в
         // отличие от IntegerRelativeCoord.
-        int horizontCeil,
-        double x, double y, double z
+        int hCeil,
+        double x = 0.0, double y = 0.0, double z = 0.0
     ) :
-        mHorizontCeil( horizontCeil ),
-        mX( x ), mY( y ), mZ( z )
+        hCeil( hCeil ),
+        x( x ), y( y ), z( z )
     {
     }
 
-
-
-    inline ~RelativeCoord() {
-    }
-
-
-
-    inline int horizontCeil() const {
-        return mHorizontCeil;
-    }
-
-
-
-    inline void horizontCeil( int hc ) {
-        mHorizontCeil = hc;
-    }
-
-
-
-    inline double x() const {
-        return mX;
-    }
-
-
-
-    inline void x( int cx ) {
-        mX = cx;
-    }
-
-
-
-    inline double y() const {
-        return mY;
-    }
-
-
-
-    inline void y( int cy ) {
-        mY = cy;
-    }
-
-
-
-    inline double z() const {
-        return mZ;
-    }
-
-
-
-    inline void z( int cz ) {
-        mZ = cz;
-    }
-
-
-
-
-
-protected:
-    /**
-    * Горизонт: потолок.
-    */
-    int mHorizontCeil;
-
-    /**
-    * 3D-координата точности 'double'.
-    */
-    double mX;
-    double mY;
-    double mZ;
 };
 
 

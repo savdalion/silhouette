@@ -16,29 +16,27 @@ namespace siu {
 * Координаты элементов в эскизе задаются целыми числами.
 * Допустимые координаты лежат в диапазоне [ min(), max() ].
 *
-* @template HCeil Верхний горизонт, охватываемый эскизом.
-* @template HFloor Нижний горизонт, охватываемый эскизом. Помогает определить
-*           границы присутствия эскиза при добавлении эскиза на холст.
 * @template K Коэффициент. Во сколько раз каждый вышестоящий горизонт больше
 *           нижестоящего. Должен быть нечётным.
 *
 * @see Canvas
 */
-template< int HCeil, int HFloor, size_t K = 3 >
+template< size_t K = 3 >
 class Sketch {
 public:
     /**
     * Содержимое эскиза - элемент, включённый в эскиз.
     */
     struct Content {
-        ElementSketch es;
-        RelativeCoord c;
+        std::shared_ptr< ElementSketch >  es;
+        RelativeCoord< K >  c;
         // @todo rotation
 
         Content(
-            const ElementSketch& es,
-            const RelativeCoord& c
+            const std::shared_ptr< ElementSketch >  es,
+            const RelativeCoord< K >&  c
         ) : es( es ), c( c ) {
+            assert( es && "Элемент эскиза не задан." );
         }
     };
 
@@ -46,10 +44,18 @@ public:
 
 public:
     /**
-    * @param Координаты эскиза в эскизе-родителе.
+    * @param rc Координаты эскиза в эскизе-родителе.
+    * @param hCeil Верхний горизонт, охватываемый эскизом.
+    * @param hFloor Нижний горизонт, охватываемый эскизом.
     */
-    inline Sketch( const RelativeCoord& rc ) {
-        static_assert( ((K % 2) == 1), "Коэффициент эскиза должен быть нечётным." );
+    inline Sketch(
+        const RelativeCoord< K >&  rcParent,
+        int hCeil, int hFloor
+    ) : rcParent( rcParent ), hCeil( hCeil ), hFloor( hFloor ) {
+        static_assert( ((K % 2) == 1),
+            "Коэффициент эскиза должен быть нечётным." );
+        assert( (hCeil >= hFloor)
+            && "Верхний горизонт должен быть больше или равен нижнему." );
     }
 
 
@@ -60,11 +66,19 @@ public:
 
 
     /**
+    * @return Глубина эскиза.
+    */
+    inline size_t depth() const {
+        return static_cast< size_t >( hCeil - hFloor );
+    }
+
+
+
+    /**
     * @return Размер эскиза в одном измерении, м.
     */
-    static inline double n() {
-        const int D = HCeil - HFloor;
-        return std::pow( static_cast< double >( K ), D );
+    inline double n() const {
+        return std::pow( static_cast< double >( K ),  static_cast< int >( depth() ) );
     }
 
 
@@ -72,7 +86,7 @@ public:
     /**
     * Минимальное допустимое значения координаты (включительно).
     */
-    static inline double min() {
+    inline double min() const {
         return -max();
     }
 
@@ -81,7 +95,7 @@ public:
     /**
     * Максимальное допустимое значения координаты (включительно).
     */
-    static inline double max() {
+    inline double max() const {
         return n() / 2.0;
     }
 
@@ -90,7 +104,7 @@ public:
     /**
     * @return Заданная координата лежит внутри эскиза.
     */
-    static inline bool inside( double x, double y, double z ) {
+    inline bool inside( double x, double y, double z ) const {
         return (
             (x >= min()) && (x <= max())
          && (y >= min()) && (y <= max())
@@ -103,7 +117,7 @@ public:
     /**
     * @return Заданная координата лежит за границами эскиза.
     */
-    static inline bool outside( double x, double y, double z ) {
+    inline bool outside( double x, double y, double z ) const {
         return (
             (z < min()) || (z > max())
          || (y < min()) || (y > max())
@@ -116,15 +130,22 @@ public:
 
     /**
     * Добавляет элемент к эскизу.
+    * Размер элемента не может превышать размер эскиза. Допустимо, чтобы
+    * элемент (но не его центр!) выходил за пределы эскиза.
     *//* - Заменено на operator<<().
     inline void place( const ElementSketch& e, const RelativeCoord& c ) {
         mContent.push_back( Content( e, c ) );
     }
     */
 
-
     inline Sketch& operator<<( const Content& yet ) {
+        assert( (yet.es->psize().get<0>() <= n() )
+             && (yet.es->psize().get<1>() <= n() )
+             && (yet.es->psize().get<2>() <= n() )
+             && "Размер элемента не может превышать размер эскиза." );
+
         mContent.push_back( yet );
+
         return *this;
     }
 
@@ -134,7 +155,7 @@ public:
     /**
     * @return Содержимое эскиза.
     */
-    inline std::vector< Content >&  content() const {
+    inline const std::vector< Content >&  content() const {
         return mContent;
     }
 
@@ -145,6 +166,20 @@ public:
 
 
 
+
+
+
+public:
+    /**
+    * Горизонты холста.
+    */
+    const int hCeil;
+    const int hFloor;
+
+    /**
+    * Координаты относительно родительского эскиза.
+    */
+    const RelativeCoord< K >  rcParent;
 
 
 
@@ -159,19 +194,3 @@ protected:
 };
 
 }
-
-
-
-
-
-
-
-
-/**
-* Добавляет к эскизу элемент.
-*//* - @todo Реализовать operator<< вместо place().
-template< int HCeil, int HFloor, size_t K = 3 >
-inline siu::Sketch&  operator<<( siu::Sketch< HCeil, HFloor, K >& s, const siu::Sketch::Content& yet ) {
-    s.content().push_back( yet );
-}
-*/

@@ -11,10 +11,6 @@ namespace siu {
 */
 struct PhysicsSolidES : public ElementSketch {
 
-    typedef double density_t;
-
-
-
     explicit inline PhysicsSolidES(
         const std::string& nick
     ) :
@@ -34,7 +30,7 @@ struct PhysicsSolidES : public ElementSketch {
     /**
     * Плотность тела, кг / м^3.
     */
-    density_t density;
+    double density;
 
 
 

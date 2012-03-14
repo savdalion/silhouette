@@ -122,51 +122,90 @@ int main( int argc, char** argv ) {
 
     // Эскиз - размером с Пояс Койпера в Солнечной системе
     // 3^27 ~ 7.6 млрд. км ~ 51 а.е. ~ 7 св. часов
-    const int HCeilSketch = 27;
+    const int hCeilSketch = 27;
     // 3^0 = 1 м
-    const int HFloorSketch = 0;
-    typedef siu::Sketch< HCeilSketch, HFloorSketch, K >  beltSketch_t;
-    const siu::RelativeCoord rcParent( HCeilSketch + 1, 0.0, 0.0, 0.0 );
-    beltSketch_t solarSystemS( rcParent );
+    const int hFloorSketch = 0;
+    typedef siu::Sketch< K >  sketch_t;
+    typedef siu::RelativeCoord< K >  coord_t;
+    const coord_t rcParent( hCeilSketch + 1, 0.0, 0.0, 0.0 );
+    sketch_t solarSystemS( rcParent, hCeilSketch, hFloorSketch );
 
     // Добавляем к эскизу планету. Представим её как эллипсоид.
     // Радиусы указываем в метрах.
     // @source http://ru.wikipedia.org/wiki/%D0%97%D0%B5%D0%BC%D0%BB%D1%8F
-    siu::EllipsoidES earth( "Земля" );
-    earth.rz = 6356.8 * 1000.0;
-    earth.rx = earth.ry = earth.rz * 1.0033528;
-    earth.density = 5515.3;
+    //siu::EllipsoidES earth( "Земля" );
+    auto earth = std::shared_ptr< siu::EllipsoidES >( new siu::EllipsoidES( "Земля" ) );
+    earth->rz = 6356.8 * 1000.0;
+    earth->rx = earth->ry = earth->rz * 1.0033528;
+    earth->density = 5515.3;
 
-    const beltSketch_t::Content contentEarth( earth, siu::RelativeCoord(
-        HCeilSketch,
-        // Солнце - центр системы - (0; 0), расстояние - в метрах
+    const sketch_t::Content contentEarth( earth, coord_t(
+        hCeilSketch,
+        // Солнце - центр системы - (0; 0), орбита планеты - в метрах
         (152097701.0 + 147098074.0) / 2.0 * 1000.0,
         0.0,
         0.0
     ) );
     solarSystemS << contentEarth;
 
+
     // Подготовим холст для визуализации эскиза
 
-    // Размер холста:
-    // [ ~ "пояс Койпера" (3^27 ~ 7.6 млрд. км);  ~ "орбита Меркурия" (3^22 ~ 31.4 млн. км) ]
-    // Наблюдение за элементами размером с "сегмент" (3^13 ~ 1600 км) и больше.
-    // Наблюдаемые элементы, размером от "сегмента" до "орбиты меркурия"
-    // располагаются на холсте отдельно и без дополнительной обработки
-    // (растрирования), т.к. их размер меньше ячейки дна этого холста.
-    // Элементы, попав на холст, степень детализации которого меньше их
-    // размеров, визуализируются точками.
-    const int HCeilCanvas = HCeilSketch;
-    // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
-    // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
-    // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
-    const int HFloorCanvas = HCeilCanvas - 5;  // = 27 - 5 = 22;
-    assert( (HFloorCanvas == 22) && "Исправьте и здесь значение дна горизонта, если это не ошибка." );
-    const int HObservation = 13;
-    typedef siu::Canvas< HCeilCanvas, HFloorCanvas, HObservation, K >  beltCanvas_t;
-    beltCanvas_t solarSystemC();
+    // Холст "Солнечная система"
+    {
+        /* - @todo ...
+        // Размер:
+        // [ ~ "пояс Койпера" (3^27 ~ 7.6 млрд. км);  ~ "орбита Меркурия" (3^22 ~ 31.4 млн. км) ]
+        // Наблюдение за элементами размером с "сегмент" (3^13 ~ 1600 км) и больше.
+        // Наблюдаемые элементы, размером от "сегмента" до "орбиты меркурия"
+        // располагаются на холсте отдельно и без дополнительной обработки
+        // (растрирования), т.к. их размер меньше ячейки дна этого холста.
+        // Элементы, попав на холст, степень детализации которого меньше их
+        // размеров, визуализируются точками.
+        const int hCeilCanvas = hCeilSketch;
+        // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
+        // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
+        // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
+        const int hFloorCanvas = hCeilCanvas - 5;  // = 27 - 5 = 22;
+        assert( (hFloorCanvas == 22) && "Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
+        const int hObservation = 13;
+        typedef siu::Canvas< K >  canvas_t;
+        canvas_t solarSystemC( hCeilCanvas, hFloorCanvas, hObservation );
 
-    solarSystemC << solarSystemS;
+        solarSystemC << solarSystemS;
+        ...
+        */
+    }
+
+
+    // Холст "Земля"
+    {
+        // Размер:
+        // [ ~ "планета" (3^15 ~ 14.3 тыс. км) ;  ~ "" (3^10 ~ 59 км) ]
+        // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
+        // Наблюдаемые элементы, размером от "эталона" до ~59 км (см. размер выше)
+        // располагаются на холсте отдельно и без дополнительной обработки
+        // (растрирования), т.к. их размер меньше ячейки дна этого холста.
+        // Элементы, попав на холст, степень детализации которого меньше их
+        // размеров, визуализируются точками.
+        const int hCeilCanvas = 15;
+        // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
+        // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
+        // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
+        const int hFloorCanvas = hCeilCanvas - 5;  // = 15 - 5 = 10;
+        assert( (hFloorCanvas == 10) && "Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
+        const int hObservation = 0;
+        typedef siu::Canvas< K >  canvas_t;
+        // Позиционируем так, чтобы в центре холста оказалась Земля
+        canvas_t earthC( hCeilCanvas, hFloorCanvas, hObservation, contentEarth.c );
+
+        // Помещаем на холст эскизы
+        // Холст сам преобразует элементы эскиза в элементы холста
+        earthC << solarSystemS;
+
+    }
+
+
 
 }
 #endif

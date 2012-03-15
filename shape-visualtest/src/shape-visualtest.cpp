@@ -4,6 +4,7 @@
 #include <RelativeCoord.h>
 #include <EllipsoidES.h>
 #include <Canvas.h>
+#include <VTKVisual.h>
 
 
 /**
@@ -213,228 +214,18 @@ int main( int argc, char** argv ) {
         earthC << solarSystemS;
 
 
-        // Переводим полученный объём в формат VTK
-        // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
-        const auto& content = earthC.content();
-        assert( (content.size() == 1) && "Ожидалось увидеть на холсте единственное содержание." );
+        // Визуализируем холст средствами VTK > http://vtk.org
+        siu::io::VTKVisual< 700, true, true >  visual;
+        visual << earthC;
+        visual.wait();
 
-        // для центрирования
-        const float halfN = static_cast< float >( earthC.n() ) / 2.0f;
-            
-        auto points = vtkSmartPointer< vtkPoints >::New();
-        auto vertices = vtkSmartPointer< vtkCellArray >::New();
-        for (auto ctr = content.cbegin(); ctr != content.cend(); ++ctr) {
-            // размер холста в одном измерении
-            const size_t N = ctr->bm->N;
-            @todo Переделать на do/while. См. ниже.
-            for (size_t z = 0; z < N; ++z) {
-                for (size_t y = 0; y < N; ++y) {
-                    for (size_t x = 0; x < N; ++x) {
-                        if ( ctr->bm->test( x, y, z ) ) {
-                            const float c[3] = {
-                                static_cast< float >( x ) - halfN,
-                                static_cast< float >( y ) - halfN,
-                                static_cast< float >( z ) - halfN
-                            };
-                            vtkIdType pid[ 1 ];
-                            pid[ 0 ] = points->InsertNextPoint( c );
-                            vertices->InsertNextCell( 1, pid );
-                        }
-                    }
-                }
-            } // for (int z = 0; z < N; ++z)
-
-        } // for (auto ctr = content.cbegin(); ctr != content.cend(); ++ctr)
-
-
-        // Визуализируем
-        auto point = vtkSmartPointer< vtkPolyData >::New();
- 
-        point->SetPoints( points );
-        point->SetVerts( vertices );
- 
-        auto mapper = vtkSmartPointer< vtkPolyDataMapper >::New();
-#if VTK_MAJOR_VERSION <= 5
-        mapper->SetInput( point );
-#else
-        mapper->SetInputData( point );
-#endif
- 
-        auto contentActor = vtkSmartPointer< vtkActor >::New();
-        contentActor->SetMapper( mapper );
-        contentActor->GetProperty()->SetPointSize( 1 );
- 
-        auto renderer = vtkSmartPointer< vtkRenderer >::New();
-        auto renderWindow = vtkSmartPointer< vtkRenderWindow >::New();
-        renderWindow->AddRenderer( renderer );
-        renderWindow->SetSize( 700, 700 );
-        auto renderWindowInteractor = vtkSmartPointer< vtkRenderWindowInteractor >::New();
-        renderWindowInteractor->SetRenderWindow( renderWindow );
- 
-        renderer->AddActor( contentActor );
-
-        /*
-        // Рисуем коробку
-        {
-            auto cubeSource = vtkSmartPointer< vtkCubeSource >::New();
-            auto cubeMapper = vtkSmartPointer< vtkPolyDataMapper >::New();
-            cubeMapper->SetInputConnection( cubeSource->GetOutputPort() );
-            auto cubeActor = vtkSmartPointer< vtkActor >::New();
-            cubeActor->SetScale( 100.0 );
-            cubeActor->SetMapper( cubeMapper );
-            renderer->AddActor( cubeActor );
-        }
-        */
-
-
-        // Рисуем коробку холста
-        auto canvasPoints = vtkSmartPointer< vtkPoints >::New();
-        auto canvasVertices = vtkSmartPointer< vtkCellArray >::New();
-        {
-            const size_t NP = 1 + 8;
-            const float p[ NP ][ 3 ] = {
-                {  0,      0,      0     },
-                {  halfN,  halfN,  halfN },
-                {  halfN,  halfN, -halfN },
-                {  halfN, -halfN,  halfN },
-                {  halfN, -halfN, -halfN },
-                { -halfN,  halfN,  halfN },
-                { -halfN,  halfN, -halfN },
-                { -halfN, -halfN,  halfN },
-                { -halfN, -halfN, -halfN }
-            };
-            vtkIdType pid[ NP ];
-            for (size_t i = 0; i < NP; ++i) {
-                pid[ i ] = canvasPoints->InsertNextPoint( p[i] );
-            }
-            canvasVertices->InsertNextCell( NP, pid );
-
-            auto canvasPolydata = vtkSmartPointer< vtkPolyData >::New();
-            canvasPolydata->SetPoints( canvasPoints );
-            canvasPolydata->SetVerts( canvasVertices );
- 
-            auto canvasMapper = vtkSmartPointer< vtkPolyDataMapper >::New();
-#if VTK_MAJOR_VERSION <= 5
-            canvasMapper->SetInput( canvasPolydata );
-#else
-            canvasMapper->SetInputData( canvasPolydata );
-#endif
-            auto canvasActor = vtkSmartPointer< vtkActor >::New();
-            canvasActor->SetMapper( canvasMapper );
-            canvasActor->GetProperty()->SetPointSize( 3.0f );
-            canvasActor->GetProperty()->SetColor( 1.0, 0.0, 0.0 );
-
-            renderer->AddActor( canvasActor );
-        }
-
-
-        // Рисуем коробку холста
-        /*
-        {
-            auto polygonSource = vtkSmartPointer< vtkRegularPolygonSource >::New(); 
-            //polygonSource->GeneratePolygonOff();
-            polygonSource->SetNumberOfSides( 4 );
-            polygonSource->SetRadius( 100 );
-            polygonSource->SetCenter( 0, 0, 0 );
-            polygonSource->Update();
-
-            auto psMapper = vtkSmartPointer< vtkPolyDataMapper >::New();
-            psMapper->SetInputConnection( polygonSource->GetOutputPort() );
-            auto psActor = vtkSmartPointer< vtkActor >::New();
-            psActor->SetMapper( psMapper );
-
-            renderer->AddActor( psActor );
-        }
-        */
-
-
-        // Рисуем оси
-        /*
-        auto axesActor = vtkSmartPointer< vtkAxesActor >::New();
-        axesActor->SetAxisLabels( 0 );
-        //axesActor->SetScale( 10000.0 );
-        renderer->AddActor( axesActor );
-        */
-
-        // Рисуем оси
-        {
-            auto cubeAxesActor = vtkSmartPointer< vtkCubeAxesActor >::New();
-            cubeAxesActor->SetBounds(
-                (canvasPoints->GetNumberOfPoints() > 0)
-                  ? canvasPoints->GetBounds() : points->GetBounds()
-            );
-            cubeAxesActor->SetCamera( renderer->GetActiveCamera() );
-            cubeAxesActor->GetProperty()->SetColor( 0.3, 0.3, 0.3 );
-            renderer->AddActor( cubeAxesActor );
-        }
-
-
-        renderer->ResetCamera();
-
-        renderWindow->Render();
-        renderWindowInteractor->Start();
-    }
+    } // Холст "Земля"
 
 
 
 }
 #endif
 
-
-
-
-#if 0
-
-    // Переводим полученный объём в формат VTK
-    // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
-    const auto topology = canvas.topology();
-    auto points = vtkSmartPointer< vtkPoints >::New();
-    auto vertices = vtkSmartPointer< vtkCellArray >::New();
-    size_t i = l0.second.get_first();
-    do {
-        float c[3];
-        siu::Canvas< N >::ci( c, i );
-        vtkIdType pid[ 1 ];
-        pid[ 0 ] = points->InsertNextPoint( c );
-        vertices->InsertNextCell( 1, pid );
-        i = l0.second.get_next( i );
-    } while ( true );
-
-
-
-    // Create a polydata object
-    auto point = vtkSmartPointer< vtkPolyData >::New();
- 
-    // Set the points and vertices we created as the geometry
-    // and topology of the polydata
-    point->SetPoints( points );
-    point->SetVerts( vertices );
- 
-    // Visualize
-    auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-#if VTK_MAJOR_VERSION <= 5
-    mapper->SetInput( point );
-#else
-    mapper->SetInputData( point );
-#endif
- 
-    auto actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper( mapper );
-    actor->GetProperty()->SetPointSize( 1 );
- 
-    auto renderer = vtkSmartPointer<vtkRenderer>::New();
-    auto renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->AddRenderer( renderer );
-    renderWindow->SetSize( 700, 500 );
-    auto renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    renderWindowInteractor->SetRenderWindow( renderWindow );
- 
-    renderer->AddActor( actor );
- 
-    renderWindow->Render();
-    renderWindowInteractor->Start();
-
-#endif
 
 
     return 0;

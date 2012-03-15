@@ -231,20 +231,20 @@ public:
 
 
     /**
-    * Заполняет в 'coord' трёхмерную координату по одномерной.
+    * Заполняет в 'coord[3]' трёхмерную координату по одномерной.
     * Результат лежит в диапазоне [ min(); max() ].
     */
     inline void ci( int* coord, size_t i ) const {
         const size_t a = n();
         const size_t aa = a * a;
         const size_t z = i / aa;
-        const size_t kz = i - z * aa;
-        const size_t y = kz / a;
+        const size_t kz = z * aa;
+        const size_t y = (i - kz) / a;
         const size_t x = i - y * a - kz;
         // @todo optimize Можно без вычитания max()?
-        coord[0] = (int)x - max();
-        coord[1] = (int)y - max();
-        coord[2] = (int)z - max();
+        coord[0] = static_cast< int >( x ) - max();
+        coord[1] = static_cast< int >( y ) - max();
+        coord[2] = static_cast< int >( z ) - max();
     }
 
 

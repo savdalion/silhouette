@@ -51,6 +51,15 @@ public:
     {
         renderWindow->AddRenderer( renderer );
         renderWindow->SetSize( sizeT, sizeT );
+
+        // Ќастраиваем камеру
+        auto camera = renderer->GetActiveCamera();
+        // перспективна€ проекци€ сильно искажает картину
+        camera->SetParallelProjection( true );
+        // направление осей: X - вправо, Y - вдаль, Z - вверх
+        camera->SetPosition( 0, -1, 0 );
+        camera->SetFocalPoint( 0, 0, 0 );
+        camera->SetViewUp( 0, 1, 1 );
     }
 
 
@@ -198,10 +207,11 @@ public:
                     showCornerT ? cornerPoints->GetBounds() : points->GetBounds()
                 );
                 cubeAxesActor->SetCamera( renderer->GetActiveCamera() );
-                cubeAxesActor->GetProperty()->SetColor( 0.2, 0.2, 0.2 );
+                cubeAxesActor->GetProperty()->SetColor( 0.3, 0.3, 0.3 );
                 //cubeAxesActor->SetXTitle( "X" );
                 //cubeAxesActor->SetYTitle( "Y" );
                 //cubeAxesActor->SetZTitle( "Z" );
+                cubeAxesActor->SetFlyModeToStaticEdges();
                 renderer->AddActor( cubeAxesActor );
             }
 

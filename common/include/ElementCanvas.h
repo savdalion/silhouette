@@ -1,5 +1,6 @@
 #pragma once
 
+#include "configure.h"
 
 namespace siu {
 

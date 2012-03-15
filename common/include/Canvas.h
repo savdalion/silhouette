@@ -1,9 +1,12 @@
 #pragma once
 
-#include "typedef.h"
+#include "configure.h"
+#include <boost/assign/list_of.hpp>
 #include <boost/unordered_set.hpp>
 #include "Sketch.h"
 #include "ElementCanvas.h"
+#include "BitContent3D.h"
+#include "SolidEC.h"
 
 
 namespace siu {
@@ -14,9 +17,6 @@ namespace siu {
 * Используется художником для рисования Картины.
 * Холст заполняется элементами эскиза, причём элементы эскиза *преобразуются*
 * в элементы холста.
-*
-* @template K Коэффициент. Во сколько раз каждый вышестоящий горизонт больше
-*           нижестоящего. Должен быть нечётным.
 *
 * Разница между верхним и нижним горизонтами определяет глубину холста.
 * Координаты элементов на холсте задаются целыми числами.
@@ -34,31 +34,36 @@ namespace siu {
 *
 * @see Sketch
 */
-template< size_t K = 3 >
 class Canvas {
 public:
     /**
     * Cодержимое холста - элементы, помещённые на холст.
     */
     struct Content {
+        /* - @todo Добавить.
         // Эскизы и элементы эскизов, которые сформировали это содержимое.
-        // Включены сюда, т.к. холст может изменять эскиз.
-        std::vector< Sketch< K > >  s;
+        // Включены сюда, т.к. холст может изменять эскиз. Наличие связи
+        // позволяет провести изменения и в родителях содержимого холста.
+        std::vector< Sketch >  s;
         std::vector< std::shared_ptr< ElementSketch > >  es;
+        */
 
         // Элемент холста - результат слияния элементов эскиза
         std::shared_ptr< ElementCanvas >  ec;
 
         // Карта, определяющая заполнение ячеек холста элементом холста
-        // @todo ...
+        std::shared_ptr< BitContent3D >  bm;
 
         Content(
-            const std::vector< Sketch< K > >&  s,
+            //const std::vector< Sketch >&  s,
             const std::vector< std::shared_ptr< ElementSketch > >&  es,
-            const std::shared_ptr< ElementCanvas >  ec
-        ) : s( s ), es( es ), ec( ec ) {
+            const std::shared_ptr< ElementCanvas >  ec,
+            const std::shared_ptr< BitContent3D >  bm
+        ) : ec( ec ), bm( bm ) {
+            /*
             assert( ( !s.empty() && !es.empty() )
                 && "Содержимое холста должно формироваться на основании эскизов и их элементов." );
+            */
             assert( ec );
         }
 
@@ -69,14 +74,25 @@ public:
             return ec->cid();
         }
 
-        bool operator==( const Content& content ) const {
-            return ( cid() == content.cid() );
+        inline bool operator==( const Content& b ) const {
+            return ( cid() == b.cid() );
         }
 
-        size_t hash_value() const {
+        /* - Вынесена в namespace boost.
+        inline size_t hash_value() const {
             return cid();
         }
+        */
     };
+
+
+
+    /**
+    * Содержимое (топология) холста.
+    * Представляет собой сгруппированные по cid() элементы холста с
+    * зажжёнными битами-ячейками, где располагаются эти элементы.
+    */
+    typedef boost::unordered_set< Content >  topology_t;
 
 
 
@@ -90,7 +106,7 @@ public:
     */
     inline Canvas(
         int hCeil, int hFloor, int hObservation,
-        const RelativeCoord< K >& c
+        const RelativeCoord& c
     ) : hCeil( hCeil ), hFloor( hFloor ), hObservation( hObservation ), c( c ) {
         static_assert( ((K % 2) == 1),
             "Коэффициент холста должен быть нечётным." );
@@ -109,6 +125,24 @@ public:
 
 
     virtual inline ~Canvas() {
+    }
+
+
+
+
+    inline boost::unordered_set< Content > const&  content() const {
+        return mContent;
+    }
+
+
+
+    /**
+    * @return Реальный размер в метрах, который охватывает холст.
+    */
+    inline double realSize() const {
+        return std::pow(
+            static_cast< double >( K ),  static_cast< int >( hCeil )
+        );
     }
 
 
@@ -219,7 +253,7 @@ public:
     /**
     * Добавляет эскиз к холсту.
     */
-    inline Canvas& operator<<( const Sketch< K >&  sketch ) {
+    inline Canvas& operator<<( const Sketch& sketch ) {
         // @todo optimize? Полагаем, что эскиз не содержит элементов,
         // размер которых превышает размер самого эскиза. Поэтому
         // можем исключить эскиз, если он или его часть не попадают
@@ -228,18 +262,16 @@ public:
         // Элементы эскиза преобразуются в элементы холста
 
         // Определяем коробку видимого холста (см. assert и todo в цикле ниже)
-        const double sizeCeilC = std::pow(
-            static_cast< double >( K ),  static_cast< int >( hCeil )
-        );
+        const double realSizeC = realSize();
         const double boxCeilMinC[] = {
-            c.x - sizeCeilC / 2.0,
-            c.y - sizeCeilC / 2.0,
-            c.z - sizeCeilC / 2.0
+            c.x - realSizeC / 2.0,
+            c.y - realSizeC / 2.0,
+            c.z - realSizeC / 2.0
         };
         const double boxCeilMaxC[] = {
-            c.x + sizeCeilC / 2.0,
-            c.y + sizeCeilC / 2.0,
-            c.z + sizeCeilC / 2.0
+            c.x + realSizeC / 2.0,
+            c.y + realSizeC / 2.0,
+            c.z + realSizeC / 2.0
         };
 
         // Определяем коробку для отсечения не наблюдаемых в холсте
@@ -283,26 +315,9 @@ public:
 
             // элемент или его часть, возможно, попадут на холст
             // Добавляем элемент на холст
-            place( ctr->es, coordES );
+            place( sketch, ctr->es, coordES );
             
         } // for (auto ctr = sketch.content().cbegin(); ctr != sketch.content().cend(); ++ctr)
-
-
-        // Добавляем эскиз
-        // Content&  yet;
-        // @todo ...
-
-        /*
-        // Добавляем содержание
-        auto ftr = mContent.find( yet );
-        if (ftr == mContent.cend()) {
-            // cid() ещё нет в содержании
-            mContent.insert( yet );
-        } else {
-            // Уже есть запись с тем же cid()
-            // @todo ftr->bm. ...
-        }
-        */
 
         return *this;
     }
@@ -319,28 +334,92 @@ protected:
     * внутри холста.
     */
     inline void place(
+        const Sketch& sketch,
         const std::shared_ptr< ElementSketch >  esPlace,
-        const RelativeCoord< K >&  cPlace
+        const RelativeCoord& cPlace
     ) {
-        // Координаты центра элемента внутри холста
-        //@todo ...
-
         // @test
         const auto& t1 = typeid( PhysicsSolidES ).name();
         const auto& t2 = typeid( *esPlace ).name();
 
+        // Для каждой фигуры создаём своё битовое содержание
+        /* - Заменено на вирт. функции. См. ниже.
         if (typeid( EllipsoidES ) == typeid( *esPlace )) {
-            auto ellipsoidES = static_cast< EllipsoidES* >( esPlace.get() );
+            const auto ellipsoidES = static_cast< EllipsoidES* >( esPlace.get() );
+            // Строим битовую форму фигуры, совмещая её образ с холстом
+            const double rs = realSize();
+            const size_t N = n();
+            const BitContent3D b = ellipsoidES->form(
+                // реальный размер холста, м
+                rs,
+                // кол-во неделимых ячеек, на которые разбит холст
+                N,
+                // координата центра холста
+                c,
+                // координата, куда следует поместить элемент холста
+                cPlace
+            );
+
             // @todo ...
 
         } else {
             // @todo ...
         }
+        */
 
-        // @todo ...
+        // Строим битовую форму фигуры, совмещая её образ с холстом
+        const double rs = realSize();
+        const size_t N = n();
+        const BitContent3D b = esPlace->form(
+            // реальный размер холста, м
+            rs,
+            // кол-во неделимых ячеек, на которые разбит холст
+            N,
+            // координата центра холста
+            c,
+            // координата, куда следует поместить элемент холста
+            cPlace
+        );
+
+        // Формируем новое содержание
+        //const std::vector< Sketch >  s = boost::assign::list_of( sketch );
+        const std::vector< std::shared_ptr< ElementSketch > >  es =
+            boost::assign::list_of( esPlace );
+        // Элемент холста - результат слияния элементов эскиза
+        const auto ec =
+            std::shared_ptr< ElementCanvas >( new SolidEC( "rock" ) );
+        // Карта, определяющая заполнение ячеек холста элементом холста
+        auto bm =
+            std::shared_ptr< BitContent3D >( new BitContent3D( b )  );
+        const Content yet( /*s,*/ es, ec, bm );
+
+        // Добавляем содержание
+        auto ftr = mContent.find( yet );
+        if (ftr == mContent.cend()) {
+            // cid() ещё нет в топологии:
+            // добавляем содержание целиком
+            mContent.insert( yet );
+
+        } else {
+            // Уже есть запись с тем же cid():
+            // сливаем совпадающие содержания
+
+            /* - @todo Ошибка.
+            // @test
+            for (auto itr = yet.s.begin(); itr != yet.s.end(); ++itr) {
+                auto s = *itr;
+                (*ftr).s.push_back( s );
+            }
+
+            //ftr->s.insert( ftr->s.end(), yet.s.begin(), yet.s.end() );
+            //ftr->es.insert( ftr->es.end(), yet.es.begin(), yet.es.end() );
+            *ftr->bm |= *yet.bm;
+            */
+
+            *ftr->bm |= *yet.bm;
+        }
 
     }
-
 
 
 
@@ -357,16 +436,34 @@ protected:
     /**
     * Координата холста.
     */
-    const RelativeCoord< K >  c;
+    const RelativeCoord  c;
 
 
     /**
-    * Содержимое (топология) холста.
-    * Представляет собой сгруппированные по cid() элементы холста с
-    * зажжёнными битами-ячейками, где располагаются эти элементы.
+    * Топология холста.
     */
-    boost::unordered_set< Content >  mContent;
+    topology_t mContent;
 
 };
+
+
+
+/*
+inline bool operator==( const siu::Canvas::Content& a, const siu::Canvas::Content& b ) {
+    return ( a.cid() == b.cid() );
+}
+*/
+
+}
+
+
+
+
+
+namespace boost {
+
+inline size_t hash_value( const siu::Canvas::Content& a ) {
+    return a.cid();
+}
 
 }

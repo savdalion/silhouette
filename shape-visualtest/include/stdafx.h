@@ -58,6 +58,12 @@
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkCamera.h>
+#include <vtkTransform.h>
+#include <vtkAxesActor.h>
+#include <vtkCubeSource.h>
+#include <vtkRegularPolygonSource.h>
+#include <vtkCubeAxesActor.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>

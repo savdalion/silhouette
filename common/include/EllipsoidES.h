@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PhysicsSolidES.h"
+#include <Ellipsoid.h>
 
 
 namespace siu {
@@ -9,6 +10,7 @@ namespace siu {
 /**
 * Элемент эскиза в виде цельного физического тела, форма - эллипсоид.
 */
+template< bool FillT >
 struct EllipsoidES : public PhysicsSolidES {
     /**
     * @param nick Короткое имя для идентификации элемента внутри эскиза.
@@ -43,6 +45,47 @@ struct EllipsoidES : public PhysicsSolidES {
             rz * 2.0
         );
     }
+
+
+
+    /**
+    * @see ElementSketch
+    */
+    virtual inline BitContent3D form(
+        double realSizeCanvas,
+        size_t nCanvas,
+        const RelativeCoord& coordCanvas,
+        const RelativeCoord& coordElementSketch
+    ) const {
+        assert( (coordCanvas.hCeil == coordElementSketch.hCeil)
+            && "Холст и элемент эскиза должны быть привязаны к одному горизонту." );
+
+        // Какой реальный размер вмещает 1 ячейка холста, м
+        const double rsc1Cell = realSizeCanvas / static_cast< double >( nCanvas );
+        // Переводим размеры эллипсоида из "метров" в "ячейки холста"
+        const auto nrx = static_cast< size_t >( std::ceil( rx / rsc1Cell ) );
+        const auto nry = static_cast< size_t >( std::ceil( ry / rsc1Cell ) );
+        const auto nrz = static_cast< size_t >( std::ceil( rz / rsc1Cell ) );
+        // Находим координату центра эллипсоида относительно центра холста
+        const RelativeCoord center = (
+            (coordCanvas - coordElementSketch) / rsc1Cell
+        );
+
+        // Формируем эллипсоид в заданном битовом объёме
+        const shape::Ellipsoid< FillT >  ellipsoid( nrx, nry, nrz );
+        const BitContent3D bc = ellipsoid.draw(
+            nCanvas,
+            static_cast< int >( std::ceil( center.x ) ),
+            static_cast< int >( std::ceil( center.y ) ),
+            static_cast< int >( std::ceil( center.z ) )
+        );
+
+        // @test
+        //const size_t count = bc.count();
+
+        return bc;
+    }
+
 
 
 

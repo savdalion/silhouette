@@ -1,5 +1,7 @@
 #pragma once
 
+#include "default.h"
+
 
 namespace siu {
 
@@ -11,7 +13,6 @@ namespace siu {
 *
 * @see IntegerRelativeCoord
 */
-template< size_t K = 3 >
 struct RelativeCoord {
 
     /**
@@ -29,16 +30,62 @@ struct RelativeCoord {
 
 
 
-    explicit inline RelativeCoord(
+    inline RelativeCoord(
         // Достаточно верхнего горизонта: координата задаётся типом 'double'.
         // Т.о. границы эскиза не хранятся в относительной координате, в
         // отличие от IntegerRelativeCoord.
         int hCeil,
-        double x = 0.0, double y = 0.0, double z = 0.0
+        double x, double y, double z
     ) :
         hCeil( hCeil ),
         x( x ), y( y ), z( z )
     {
+    }
+
+
+
+    explicit
+    inline RelativeCoord(
+        int hCeil
+    ) :
+        hCeil( hCeil ),
+        x( 0.0 ), y( 0.0 ), z( 0.0 )
+    {
+    }
+
+
+
+    inline RelativeCoord operator+( const RelativeCoord& b ) const {
+        assert( (hCeil == b.hCeil) && "Не умеем работать с разными горизонтами. @todo" );
+        return RelativeCoord( hCeil,  x + b.x,  y + b.y,  z + b.z );
+    }
+
+
+
+    inline RelativeCoord operator-( const RelativeCoord& b ) const {
+        assert( (hCeil == b.hCeil) && "Не умеем работать с разными горизонтами. @todo" );
+        return RelativeCoord( hCeil,  x - b.x,  y - b.y,  z - b.z );
+    }
+
+
+
+    inline RelativeCoord operator*( double k ) const {
+        return RelativeCoord( hCeil,  x * k,  y * k,  z * k );
+    }
+
+
+
+    inline RelativeCoord operator/( double k ) const {
+        return RelativeCoord( hCeil,  x / k,  y / k,  z / k );
+    }
+
+
+
+    inline bool operator==( const RelativeCoord& b ) const {
+        return (hCeil == b.hCeil)
+            && ( std::abs(x - b.x) < d::PRECISION )
+            && ( std::abs(y - b.y) < d::PRECISION )
+            && ( std::abs(z - b.z) < d::PRECISION );
     }
 
 };

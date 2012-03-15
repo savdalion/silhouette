@@ -1,5 +1,6 @@
 #pragma once
 
+#include "configure.h"
 #include "RelativeCoord.h"
 #include "ElementSketch.h"
 
@@ -16,12 +17,8 @@ namespace siu {
 * Координаты элементов в эскизе задаются целыми числами.
 * Допустимые координаты лежат в диапазоне [ min(), max() ].
 *
-* @template K Коэффициент. Во сколько раз каждый вышестоящий горизонт больше
-*           нижестоящего. Должен быть нечётным.
-*
 * @see Canvas
 */
-template< size_t K = 3 >
 class Sketch {
 public:
     /**
@@ -29,15 +26,20 @@ public:
     */
     struct Content {
         std::shared_ptr< ElementSketch >  es;
-        RelativeCoord< K >  c;
+        RelativeCoord c;
         // @todo rotation
 
         Content(
             const std::shared_ptr< ElementSketch >  es,
-            const RelativeCoord< K >&  c
+            const RelativeCoord&  c
         ) : es( es ), c( c ) {
             assert( es && "Элемент эскиза не задан." );
         }
+
+        inline bool operator==( const Content& b ) const {
+            return (*es == *b.es) && (c == b.c);
+        }
+
     };
 
 
@@ -49,7 +51,7 @@ public:
     * @param hFloor Нижний горизонт, охватываемый эскизом.
     */
     inline Sketch(
-        const RelativeCoord< K >&  rcParent,
+        const RelativeCoord&  rcParent,
         int hCeil, int hFloor
     ) : rcParent( rcParent ), hCeil( hCeil ), hFloor( hFloor ) {
         static_assert( ((K % 2) == 1),
@@ -167,6 +169,15 @@ public:
 
 
 
+    inline bool operator==( const Sketch& b ) const {
+        return (hCeil == b.hCeil)
+            && (hFloor == b.hFloor)
+            && (rcParent == b.rcParent)
+            && (mContent == b.mContent);
+    }
+
+
+
 
 
 public:
@@ -179,7 +190,7 @@ public:
     /**
     * Координаты относительно родительского эскиза.
     */
-    const RelativeCoord< K >  rcParent;
+    const RelativeCoord rcParent;
 
 
 

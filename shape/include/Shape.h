@@ -1,10 +1,13 @@
 #pragma once
 
-#include "typedef.h"
+#include <BitContent3D.h>
+#include <math.h>
+
 
 
 namespace siu {
     namespace shape {
+
 
 /**
 * Базовый класс для форм.

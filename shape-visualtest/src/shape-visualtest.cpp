@@ -111,12 +111,9 @@ int main( int argc, char** argv ) {
 
 
 
-    // Получаем формы из библиотеки 'shape' и помещаем их в окна рендеринга
 
 
-
-
-#ifdef SHAPE_VISUALTEST_ELLI
+#ifdef SIU_SHAPE_VISUALTEST_PLANET_EARTH
 {
     // Эскиз - размером с Пояс Койпера в Солнечной системе
     // 3^27 ~ 7.6 млрд. км ~ 51 а.е. ~ 7 св. часов
@@ -131,8 +128,9 @@ int main( int argc, char** argv ) {
     // Добавляем к эскизу планету. Представим её как эллипсоид.
     // Радиусы указываем в метрах.
     // @source http://ru.wikipedia.org/wiki/%D0%97%D0%B5%D0%BC%D0%BB%D1%8F
-    //siu::EllipsoidES earth( "Земля" );
-    auto earth = std::shared_ptr< siu::EllipsoidES< true > >( new siu::EllipsoidES< true >( "Земля" ) );
+    typedef siu::EllipsoidES< true >  fillEllipsoid_t;
+    typedef siu::EllipsoidES< false > surfaceEllipsoid_t;
+    auto earth = std::shared_ptr< surfaceEllipsoid_t >( new surfaceEllipsoid_t( "Земля" ) );
     earth->rz = 6356.8 * 1000.0;
     earth->rx = earth->ry = earth->rz * 1.0033528;
     earth->density = 5515.3;
@@ -175,6 +173,92 @@ int main( int argc, char** argv ) {
         */
     }
 
+
+    // Холст "Земля"
+    {
+        // Размер:
+        // [ ~ "планета" (3^15 ~ 14.3 тыс. км) ;  ~ "" (3^10 ~ 59 км) ]
+        // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
+        // Наблюдаемые элементы, размером от "эталона" до ~59 км (см. размер выше)
+        // располагаются на холсте отдельно и без дополнительной обработки
+        // (растрирования), т.к. их размер меньше ячейки дна этого холста.
+        // Элементы, попав на холст, степень детализации которого меньше их
+        // размеров, визуализируются точками.
+        const int hCeilCanvas = 15;
+        // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
+        // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
+        // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
+        const int hFloorCanvas = hCeilCanvas - 5;  // = 15 - 5 = 10;
+        assert( (hFloorCanvas == 10) && "Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
+        const int hObservation = 0;
+        typedef siu::Canvas canvas_t;
+        
+#if 1
+        // @1 Позиционируем так, чтобы в центре холста оказалась Земля
+        canvas_t earthC( hCeilCanvas, hFloorCanvas, hObservation, contentEarth.c );
+#else        
+        // @2 Позиционируем так, чтобы Земля частично оказалась вне холста
+        const double earthShift = 6000.0 * 1000.0;
+        canvas_t earthC( hCeilCanvas, hFloorCanvas, hObservation, coord_t(
+            contentEarth.c.hCeil,
+            contentEarth.c.x + earthShift,
+            contentEarth.c.y + earthShift,
+            contentEarth.c.z + earthShift
+        ) );
+#endif
+
+        // Помещаем на холст эскизы
+        // Холст сам преобразует элементы эскиза в элементы холста
+        earthC << solarSystemS;
+
+
+        // Визуализируем холст средствами VTK > http://vtk.org
+        siu::io::VTKVisual< 700, true, true >  visual;
+        visual << earthC;
+        visual.wait();
+
+    } // Холст "Земля"
+
+
+
+}
+#endif
+
+
+
+
+
+
+
+
+#ifdef SIU_SHAPE_VISUALTEST_SMALL_HEIGHTMAP1
+{
+    // Эскиз - размером с планету земного типа:
+    // 3^15 ~ 14.3 тыс. км
+    const int hCeilSketch = 15;
+    // 3^0 = 1 м
+    const int hFloorSketch = 0;
+    const siu::RelativeCoord rcParent( hCeilSketch + 1, 0.0, 0.0, 0.0 );
+    siu::Sketch solarSystemS( rcParent, hCeilSketch, hFloorSketch );
+
+    // Добавляем к эскизу карту высот.
+    // Размеры указываем в метрах.
+    auto earth = std::shared_ptr< siu::EllipsoidES< true > >( new siu::EllipsoidES< true >( "Земля" ) );
+    earth->rz = 6356.8 * 1000.0;
+    earth->rx = earth->ry = earth->rz * 1.0033528;
+    earth->density = 5515.3;
+
+    const siu::Sketch::Content contentEarth( earth, siu::RelativeCoord(
+        hCeilSketch,
+        // Солнце - центр системы - (0; 0), орбита планеты - в метрах
+        (152097701.0 + 147098074.0) / 2.0 * 1000.0,
+        0.0,
+        0.0
+    ) );
+    solarSystemS << contentEarth;
+
+
+    // Подготовим холст для визуализации эскиза
 
     // Холст "Земля"
     {

@@ -63,21 +63,21 @@ struct EllipsoidES : public PhysicsSolidES {
         // Какой реальный размер вмещает 1 ячейка холста, м
         const double rsc1Cell = realSizeCanvas / static_cast< double >( nCanvas );
         // Переводим размеры эллипсоида из "метров" в "ячейки холста"
-        const auto nrx = static_cast< size_t >( std::ceil( rx / rsc1Cell ) );
-        const auto nry = static_cast< size_t >( std::ceil( ry / rsc1Cell ) );
-        const auto nrz = static_cast< size_t >( std::ceil( rz / rsc1Cell ) );
+        const auto ndx = static_cast< size_t >( std::ceil( rx / rsc1Cell * 2.0 + 0.001 ) );
+        const auto ndy = static_cast< size_t >( std::ceil( ry / rsc1Cell * 2.0 + 0.001 ) );
+        const auto ndz = static_cast< size_t >( std::ceil( rz / rsc1Cell * 2.0 + 0.001 ) );
         // Находим координату центра эллипсоида относительно центра холста
         const RelativeCoord center = (
             (coordCanvas - coordElementSketch) / rsc1Cell
         );
 
         // Формируем эллипсоид в заданном битовом объёме
-        const shape::Ellipsoid< FillT >  ellipsoid( nrx, nry, nrz );
+        const shape::Ellipsoid< FillT >  ellipsoid( ndx, ndy, ndz );
         const BitContent3D bc = ellipsoid.draw(
             nCanvas,
-            static_cast< int >( std::ceil( center.x ) ),
-            static_cast< int >( std::ceil( center.y ) ),
-            static_cast< int >( std::ceil( center.z ) )
+            static_cast< int >( std::ceil( center.x + 0.001 ) ),
+            static_cast< int >( std::ceil( center.y + 0.001 ) ),
+            static_cast< int >( std::ceil( center.z + 0.001 ) )
         );
 
         // @test

@@ -56,15 +56,16 @@ public:
         auto camera = renderer->GetActiveCamera();
         // перспективная проекция сильно искажает картину
         camera->SetParallelProjection( true );
-        // направление осей: X - вправо, Y - вдаль, Z - вверх
+        // направление осей: X - вправо, Y - к наблюдателю, Z - вверх
         camera->SetPosition( 0, -1, 0 );
         camera->SetFocalPoint( 0, 0, 0 );
-        camera->SetViewUp( 0, 1, 1 );
+        //camera->SetViewUp( 0, 1, 1 );
     }
 
 
 
     virtual inline ~VTKVisual() {
+        // используются умные указатели, красота
     }
 
 

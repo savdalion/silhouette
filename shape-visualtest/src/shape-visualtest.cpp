@@ -195,7 +195,7 @@ int main( int argc, char** argv ) {
         const int hObservation = 0;
         typedef siu::Canvas canvas_t;
         
-#if 0
+#if 1
         // @1 Позиционируем так, чтобы в центре холста оказалась Земля
         canvas_t earthC( hCeilCanvas, hFloorCanvas, hObservation, contentEarth.c );
 #else        

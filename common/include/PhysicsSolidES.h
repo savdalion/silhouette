@@ -12,9 +12,10 @@ namespace siu {
 struct PhysicsSolidES : public ElementSketch {
 
     explicit inline PhysicsSolidES(
-        const std::string& nick
+        const std::string& nick,
+        const matter_t& matter
     ) :
-        ElementSketch( nick ),
+        ElementSketch( nick, matter ),
         density( 0.0 )
     {
     }

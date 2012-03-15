@@ -1,6 +1,8 @@
 #pragma once
 
 #include "configure.h"
+#include "Element.h"
+
 
 namespace siu {
 
@@ -10,7 +12,7 @@ namespace siu {
 *
 * @see Sketch
 */
-struct ElementCanvas {
+struct ElementCanvas : public Element {
 
     /**
     * Тип обобщённого идентификатора элемента.
@@ -18,12 +20,14 @@ struct ElementCanvas {
     typedef size_t cid_t;
 
 
-    inline ElementCanvas() {
+    inline ElementCanvas(
+        const matter_t& matter
+    ) : Element( matter ) {
     }
 
 
 
-    inline ~ElementCanvas() {
+    virtual inline ~ElementCanvas() {
     }
 
 
@@ -31,7 +35,7 @@ struct ElementCanvas {
 
 
     /**
-    * @return Обобщённый идентификатор элемента.
+    * @return Обобщённый идентификатор элемента холста.
     */
     virtual cid_t cid() const = 0;
 

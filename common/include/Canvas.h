@@ -338,35 +338,6 @@ protected:
         const std::shared_ptr< ElementSketch >  esPlace,
         const RelativeCoord& cPlace
     ) {
-        // @test
-        const auto& t1 = typeid( PhysicsSolidES ).name();
-        const auto& t2 = typeid( *esPlace ).name();
-
-        // Для каждой фигуры создаём своё битовое содержание
-        /* - Заменено на вирт. функции. См. ниже.
-        if (typeid( EllipsoidES ) == typeid( *esPlace )) {
-            const auto ellipsoidES = static_cast< EllipsoidES* >( esPlace.get() );
-            // Строим битовую форму фигуры, совмещая её образ с холстом
-            const double rs = realSize();
-            const size_t N = n();
-            const BitContent3D b = ellipsoidES->form(
-                // реальный размер холста, м
-                rs,
-                // кол-во неделимых ячеек, на которые разбит холст
-                N,
-                // координата центра холста
-                c,
-                // координата, куда следует поместить элемент холста
-                cPlace
-            );
-
-            // @todo ...
-
-        } else {
-            // @todo ...
-        }
-        */
-
         // Строим битовую форму фигуры, совмещая её образ с холстом
         const double rs = realSize();
         const size_t N = n();
@@ -387,9 +358,9 @@ protected:
             boost::assign::list_of( esPlace );
         // Элемент холста - результат слияния элементов эскиза
         const auto ec =
-            std::shared_ptr< ElementCanvas >( new SolidEC( "rock" ) );
+            std::shared_ptr< ElementCanvas >( new SolidEC( esPlace->matter ) );
         // Карта, определяющая заполнение ячеек холста элементом холста
-        auto bm =
+        const auto bm =
             std::shared_ptr< BitContent3D >( new BitContent3D( b )  );
         const Content yet( /*s,*/ es, ec, bm );
 

@@ -19,9 +19,10 @@ struct EllipsoidES : public PhysicsSolidES {
     *        характеристике элемента.
     */
     explicit inline EllipsoidES(
-        const std::string& nick = ""
+        const std::string& nick,
+        const matter_t& matter
     ) :
-        PhysicsSolidES( nick ),
+        PhysicsSolidES( nick, matter ),
         rx( 0.0 ),
         ry( 0.0 ),
         rz( 0.0 )

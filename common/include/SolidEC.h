@@ -27,8 +27,8 @@ struct SolidEC : public ElementCanvas {
     *        характеристике элемента.
     */
     inline SolidEC(
-        const uidMatter_t& matter
-    ) : matter( matter ) {
+        const matter_t& matter
+    ) : ElementCanvas( matter ) {
     }
 
 
@@ -42,7 +42,7 @@ struct SolidEC : public ElementCanvas {
     * @see ElementCanvas
     */
     inline virtual cid_t cid() const {
-        boost::hash< uidMatter_t >  hash;
+        boost::hash< matter_t >  hash;
         return hash( matter );
     }
 

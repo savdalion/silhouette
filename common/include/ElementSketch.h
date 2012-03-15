@@ -4,6 +4,7 @@
 #include "RelativeCoord.h"
 #include "BitContent3D.h"
 #include <boost/tuple/tuple.hpp>
+#include "Element.h"
 
 
 namespace siu {
@@ -17,10 +18,10 @@ namespace siu {
 *
 * @see Sketch
 */
-struct ElementSketch {
+struct ElementSketch : public Element {
 
     /**
-    * Физический размер элемента по осям XYZ.
+    * Физический размер элемента эскиза по осям XYZ.
     */
     typedef boost::tuple< double, double, double >  psize_t;
 
@@ -33,15 +34,16 @@ struct ElementSketch {
     *        характеристике элемента.
     */
     explicit inline ElementSketch(
-        const std::string& nick
+        const std::string& nick,
+        const matter_t& matter
     ) :
-        nick( nick )
+        Element( matter ), nick( nick )
     {
     }
 
 
 
-    inline ~ElementSketch() {
+    virtual inline ~ElementSketch() {
     }
 
 

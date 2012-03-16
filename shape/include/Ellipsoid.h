@@ -8,6 +8,8 @@ namespace siu {
 
 /**
 * Ёллипосид.
+*
+* @template FillT Ёллипсоид будет заполнен.
 */
 template< bool FillT >
 class Ellipsoid : public Shape {
@@ -30,7 +32,7 @@ public:
 
 
 #if 0
-    // ѕоверхность строитс€ параметрическим уравнением
+    // Ёллипсоид строитс€ параметрическим уравнением
     inline BitContent3D draw( size_t nCanvas, int cx, int cy, int cz ) const {
         assert( nCanvas > 0 );
         assert( ((nCanvas % 2) == 1) && " ол-во €чеек холста должно быть нечЄтным." );
@@ -86,10 +88,7 @@ public:
 
 #else
 
-    // ѕоверхность строитс€ прохождением по сетке холста
-    /**
-    * @template FillT Ёллипсоид будет заполнен.
-    */
+    // Ёллипсоид строитс€ прохождением по сетке холста
     inline BitContent3D draw( size_t nCanvas, int cx, int cy, int cz ) const {
         assert( nCanvas > 0 );
         assert( ((nCanvas % 2) == 1) && " ол-во €чеек холста должно быть нечЄтным." );

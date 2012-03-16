@@ -50,6 +50,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -69,8 +70,10 @@
     <ClInclude Include="include\Canvas.h" />
     <ClInclude Include="include\Creator.h" />
     <ClInclude Include="include\default.h" />
+    <ClInclude Include="include\Element.h" />
     <ClInclude Include="include\ElementCanvas.h" />
     <ClInclude Include="include\ElementSketch.h" />
+    <ClInclude Include="include\ElevationMapES.h" />
     <ClInclude Include="include\EllipsoidES.h" />
     <ClInclude Include="include\configure.h" />
     <ClInclude Include="include\PhysicsSolidES.h" />

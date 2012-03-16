@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PhysicsSolidES.h"
-#include <Ellipsoid.h>
+#include <ElevationMap.h>
 
 
 namespace siu {
@@ -11,22 +11,22 @@ namespace siu {
 * Элемент эскиза в виде цельного физического тела, форма - эллипсоид.
 */
 template< bool FillT >
-struct EllipsoidES : public PhysicsSolidES {
+struct ElevationMapES : public PhysicsSolidES {
 
-    inline EllipsoidES(
+    inline ElevationMapES(
         const std::string& nick,
         const matter_t& matter
     ) :
         PhysicsSolidES( nick, matter ),
-        rx( 0.0 ),
-        ry( 0.0 ),
-        rz( 0.0 )
+        source( "" ),
+        sizeXY( 0.0 ),
+        height( 0.0 )
     {
     }
 
 
 
-    inline ~EllipsoidES() {
+    inline ~ElevationMapES() {
     }
 
 
@@ -35,11 +35,7 @@ struct EllipsoidES : public PhysicsSolidES {
     * @see ElementSketch
     */
     virtual psize_t psize() const {
-        return psize_t(
-            rx * 2.0,
-            ry * 2.0,
-            rz * 2.0
-        );
+        return psize_t( sizeXY, sizeXY, height );
     }
 
 
@@ -58,19 +54,17 @@ struct EllipsoidES : public PhysicsSolidES {
 
         // Какой реальный размер вмещает 1 ячейка холста, м
         const double rsc1Cell = realSizeCanvas / static_cast< double >( nCanvas );
-        // Переводим размеры эллипсоида из "метров" в "ячейки холста"
-        const shiftCenter_t sc = shiftCenter();
-        const auto ndx = static_cast< size_t >( std::floor( ( rx * 2.0 - sc.get<0>() ) / rsc1Cell + 0.001 ) );
-        const auto ndy = static_cast< size_t >( std::floor( ( ry * 2.0 - sc.get<1>() ) / rsc1Cell + 0.001 ) );
-        const auto ndz = static_cast< size_t >( std::floor( ( rz * 2.0 - sc.get<0>() ) / rsc1Cell + 0.001 ) );
-        // Находим координату центра эллипсоида относительно центра холста
+        // Переводим размеры карты высот из "метров" в "ячейки холста"
+        const auto nsxy = static_cast< size_t >( std::ceil( sizeXY / rsc1Cell ) + 0.001 );
+        const auto nh = static_cast< size_t >( std::ceil( height / rsc1Cell ) + 0.001 );
+        // Находим координату центра карты высот относительно центра холста
         const RelativeCoord center = (
             (coordCanvas - coordElementSketch) / rsc1Cell
         );
 
-        // Формируем эллипсоид в заданном битовом объёме
-        const shape::Ellipsoid< FillT >  ellipsoid( ndx, ndy, ndz );
-        const BitContent3D bc = ellipsoid.draw(
+        // Формируем карту высот в заданном битовом объёме
+        const shape::ElevationMap< FillT >  elevationMap( source, nsxy, nh );
+        const BitContent3D bc = elevationMap.draw(
             nCanvas,
             static_cast< int >( std::floor( center.x + 0.001 ) ),
             static_cast< int >( std::floor( center.y + 0.001 ) ),
@@ -96,18 +90,31 @@ struct EllipsoidES : public PhysicsSolidES {
     * @see PhysicsSolidES
     */
     inline virtual double volume() const {
-        return 4.0 / 3.0 * M_PI * rx * ry * rz;
+        // @todo Считать объём точнее.
+        return sizeXY * sizeXY * height;
     }
 
 
 
 
     /**
-    * Реальные физические радиусы эллипсоида, м.
+    * Путь к источнику - файлу PNG - для построения объекта по карте высот.
     */
-    double rx;
-    double ry;
-    double rz;
+    std::string source;
+
+
+    /**
+    * Размер элемента эскиза, заданного картой высот, м.
+    *
+    * @todo Позволять не только квадратные размеры.
+    */
+    double sizeXY;
+
+
+    /**
+    * Высота всей карты высот, м.
+    */
+    double height;
 
 };
 

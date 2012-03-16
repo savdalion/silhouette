@@ -38,9 +38,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(BOOST_ROOT);D:\Projects\workspace\utils\bm3.7.0\src;D:\Projects\workspace\silhouette\common\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(BOOST_ROOT);D:\Projects\workspace\utils\bm3.7.0\src;D:\Projects\workspace\silhouette\common\include;D:/Projects/workspace/utils/VTK/Filtering;D:/Projects/workspace/utils/VTK/Imaging;D:/Projects/workspace/utils/VTK/IO;$(IncludePath)</IncludePath>
     <IntDir>V:\temp\debug-silhuette\$(MSBuildProjectName)\</IntDir>
-    <LibraryPath>D:\Projects\workspace\silhouette\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\Projects\workspace\silhouette\Debug;D:\Projects\workspace\utils\VTK\vc2010\bin\Debug;$(LibraryPath)</LibraryPath>
     <OutDir>V:\bin\debug-silhuette\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -53,7 +53,7 @@
     </Link>
     <Lib />
     <Lib>
-      <AdditionalDependencies>common.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vtkIO.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -71,6 +71,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\configure.h" />
+    <ClInclude Include="include\ElevationMap.h" />
     <ClInclude Include="include\Ellipsoid.h" />
     <ClInclude Include="include\Shape.h" />
   </ItemGroup>

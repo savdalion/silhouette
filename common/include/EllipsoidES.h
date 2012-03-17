@@ -59,10 +59,9 @@ struct EllipsoidES : public PhysicsSolidES {
         // Какой реальный размер вмещает 1 ячейка холста, м
         const double rsc1Cell = realSizeCanvas / static_cast< double >( nCanvas );
         // Переводим размеры эллипсоида из "метров" в "ячейки холста"
-        const shiftCenter_t sc = shiftCenter();
-        const auto ndx = static_cast< size_t >( std::floor( ( rx * 2.0 - sc.get<0>() ) / rsc1Cell + 0.001 ) );
-        const auto ndy = static_cast< size_t >( std::floor( ( ry * 2.0 - sc.get<1>() ) / rsc1Cell + 0.001 ) );
-        const auto ndz = static_cast< size_t >( std::floor( ( rz * 2.0 - sc.get<0>() ) / rsc1Cell + 0.001 ) );
+        const auto ndx = static_cast< size_t >( std::floor( ( rx * 2.0 ) / rsc1Cell + 0.001 ) );
+        const auto ndy = static_cast< size_t >( std::floor( ( ry * 2.0 ) / rsc1Cell + 0.001 ) );
+        const auto ndz = static_cast< size_t >( std::floor( ( rz * 2.0 ) / rsc1Cell + 0.001 ) );
         // Находим координату центра эллипсоида относительно центра холста
         const RelativeCoord center = (
             (coordCanvas - coordElementSketch) / rsc1Cell
@@ -80,15 +79,6 @@ struct EllipsoidES : public PhysicsSolidES {
         return bc;
     }
 
-
-
-
-    /**
-    * @see PhysicsSolidES
-    */
-    inline virtual double mass() const {
-        return density * volume();
-    }
 
 
 

@@ -54,9 +54,12 @@ struct ElevationMapES : public PhysicsSolidES {
 
         //  акой реальный размер вмещает 1 €чейка холста, м
         const double rsc1Cell = realSizeCanvas / static_cast< double >( nCanvas );
-        // ѕереводим размеры карты высот из "метров" в "€чейки холста"
-        const auto nsxy = static_cast< size_t >( std::ceil( sizeXY / rsc1Cell ) + 0.001 );
-        const auto nh = static_cast< size_t >( std::ceil( height / rsc1Cell ) + 0.001 );
+        // ѕереводим размеры карты высот из "метров" в "€чейки холста". ’олст
+        // может быть меньшего размера, чем эскиз, поэтому понадобитс€
+        // дополнительна€ детализаци€.
+
+        const auto nsxy = static_cast< size_t >( std::ceil( sizeXY / rsc1Cell ) );
+        const auto nh = static_cast< size_t >( std::ceil( height / rsc1Cell ) );
         // Ќаходим координату центра карты высот относительно центра холста
         const RelativeCoord center = (
             (coordCanvas - coordElementSketch) / rsc1Cell
@@ -74,15 +77,6 @@ struct ElevationMapES : public PhysicsSolidES {
         return bc;
     }
 
-
-
-
-    /**
-    * @see PhysicsSolidES
-    */
-    inline virtual double mass() const {
-        return density * volume();
-    }
 
 
 

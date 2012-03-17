@@ -36,9 +36,12 @@ struct PhysicsSolidES : public ElementSketch {
 
 
     /**
-    * @return Масса тела.
+    * @see PhysicsSolidES
     */
-    virtual double mass() const = 0;
+    inline virtual double mass() const {
+        return density * volume();
+    }
+
 
 
     /**

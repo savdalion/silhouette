@@ -31,13 +31,19 @@ namespace siu {
 /**
 * Визуализация средствами VTK.
 *
-* @template sizeT Размер окна визуализации, пкс. Окно - квадратное.
+* @template sizeWindowT Размер окна визуализации, пкс. Окно - квадратное.
+* @template sizePointT Размер точки, пкс.
 * @template showCornerT Отмечать углы визуализируемого элемента.
 * @template showAxesT Показывать оси декартовых координат.
 *
 * @source http://vtk.org
 */
-template< size_t sizeT, bool showCornerT = true, bool showAxesT = true >
+template<
+    size_t sizeWindowT,
+    size_t sizePointT,
+    bool showCornerT = true,
+    bool showAxesT = true
+>
 class VTKVisual {
 public:
     /**
@@ -50,7 +56,7 @@ public:
         hasAxes( false )
     {
         renderWindow->AddRenderer( renderer );
-        renderWindow->SetSize( sizeT, sizeT );
+        renderWindow->SetSize( sizeWindowT, sizeWindowT );
 
         // Настраиваем камеру
         auto camera = renderer->GetActiveCamera();
@@ -111,7 +117,7 @@ public:
  
         auto contentActor = vtkSmartPointer< vtkActor >::New();
         contentActor->SetMapper( mapper );
-        contentActor->GetProperty()->SetPointSize( 1 );
+        contentActor->GetProperty()->SetPointSize( sizePointT );
         renderer->AddActor( contentActor );
 
 
@@ -258,6 +264,7 @@ private:
                 static_cast< float >( c[2] ) + shiftCenter
             };
             vtkIdType pid[ 1 ];
+            // @todo optimize Использовать более быстрое заполнение точками и вершинами.
             pid[ 0 ] = points->InsertNextPoint( cf );
             vertices->InsertNextCell( 1, pid );
 

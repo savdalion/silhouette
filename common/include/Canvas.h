@@ -140,9 +140,7 @@ public:
     * @return Реальный размер в метрах, который охватывает холст.
     */
     inline double realSize() const {
-        return std::pow(
-            static_cast< double >( K ),  static_cast< int >( hCeil )
-        );
+        return std::pow( static_cast< double >( K ),  hCeil );
     }
 
 
@@ -274,7 +272,9 @@ public:
             c.z + realSizeC / 2.0
         };
 
-        // Определяем коробку для отсечения не наблюдаемых в холсте
+        const double realSizeS = sketch.realSize();
+
+        // Определяем коробку для отсечения не наблюдаемых на холсте
         // (малых по размеру) уровней
         // @todo ...
 
@@ -296,7 +296,7 @@ public:
             };
 
             // @todo Позволить работать с разными горизонтами.
-            assert( (coordES.hCeil == c.hCeil) && "Горизонты холста и эскиза не совпадают. @todo" );
+            assert( (coordES.hCeil == c.hCeil) && "Горизонты позиционирования холста и эскиза не совпадают. @todo" );
 
             // если горизонты совпадают, сравнение будет простым
             const auto intersectBox =
@@ -338,7 +338,8 @@ protected:
         const std::shared_ptr< ElementSketch >  esPlace,
         const RelativeCoord& cPlace
     ) {
-        // Строим битовую форму фигуры, совмещая её образ с холстом
+        // Строим битовую форму фигуры, совмещая её образ с холстом.
+
         const double rs = realSize();
         const size_t N = n();
         const BitContent3D b = esPlace->form(
@@ -388,7 +389,8 @@ protected:
             */
 
             *ftr->bm |= *yet.bm;
-        }
+
+        } // else if (ftr == mContent.cend())
 
     }
 

@@ -18,9 +18,6 @@
     <ClInclude Include="include\configure.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="include\Creator.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
     <ClInclude Include="include\Canvas.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>

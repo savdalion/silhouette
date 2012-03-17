@@ -29,16 +29,76 @@ public:
         source( source ),
         sizeXY( sizeXY ),
         height( height ),
+        imageScale( 1.0f ),
         imageReader( nullptr ),
+        imageResizer( nullptr ),
         imageData( nullptr )
     {
         assert( ( (sizeXY > 0) && (height > 0) )
             && "¬се размеры должны быть указаны." );
+
+        // „итаем карту высот из 'source'
+        imageReader = vtkSmartPointer< vtkPNGReader >::New();
+        /*
+        const char* fname =
+            vtkTestUtilities::ExpandDataFileName( 0, nullptr, source.c_str() );
+        reader->SetFileName( fname );
+        delete[] fname;
+        */
+        imageReader->SetFileName( source.c_str() );
+        imageReader->Update();
+        imageData = vtkImageData::SafeDownCast( imageReader->GetOutput() );
+
+        imageData->GetDimensions( dimension );
+        assert( (dimension[0] == dimension[1]) && "”меем работать только с квадратной картой высот. @todo" );
+        assert( ((dimension[0] * dimension[1]) > 0) && "»зображение карты высот не содержит данных." );
+
+        // изображение увеличивать не будем, но большое - уменьшим до 'sizeXY'
+        imageScale = static_cast< float >( sizeXY ) / static_cast< float >( dimension[0] );
+        if (dimension[0] > static_cast< int >( sizeXY ) ) {
+            imageResizer = vtkSmartPointer< vtkImageResample >::New();
+            imageResizer->SetInput( imageData );
+            imageResizer->SetAxisMagnificationFactor( 0, imageScale );
+            imageResizer->SetAxisMagnificationFactor( 1, imageScale );
+#if VTK_MAJOR_VERSION <= 5
+            imageResizer->SetInputConnection( imageData->GetProducerPort() );
+#else
+            imageResizer->SetInputData( imageData );
+#endif
+            imageResizer->Update();
+
+            imageData = imageResizer->GetOutput();
+            imageData->GetDimensions( dimension );
+
+            // изображение уменьшено, масштаб теперь 1:1
+            imageScale = 1.0f;
+
+            /* @test
+            auto imageWriter = vtkSmartPointer< vtkPNGWriter >::New();
+            const std::string file = "V:/bin/debug-silhuette/pixelValue-ElevationMap-scale-test.png";
+            imageWriter->SetFileName( file.c_str() );
+            imageWriter->SetInput( imageData );
+            imageWriter->Write();
+            */
+
+        } // if (dimension[0] > static_cast< int >( sizeXY ) )
+
+#if VTK_MAJOR_VERSION <= 5
+        imageData->SetNumberOfScalarComponents( 1 );
+        imageData->SetScalarTypeToUnsignedChar();
+        imageData->AllocateScalars();
+#else
+        imageData->AllocateScalars( VTK_UNSIGNED_CHAR, 1 );
+#endif
+
     }
+
+
 
 
     virtual inline ~ElevationMap() {
     }
+
 
 
 
@@ -47,8 +107,11 @@ public:
         assert( ((nCanvas % 2) == 1) && " ол-во €чеек холста должно быть нечЄтным." );
 
         const int NI = static_cast< int >( nCanvas );
-        const size_t NP = nCanvas - 1;
+        const size_t NB = nCanvas - 1;
         const int maxCanvas = (NI - 1) / 2;
+
+        const int halfSizeXY = static_cast< int >( sizeXY ) / 2;
+        //const int halfSizeHeight = static_cast< int >( height ) / 2;
 
         BitContent3D bc( nCanvas );
 
@@ -59,35 +122,59 @@ public:
         // карты высот по оси Z лежит на уровне 0.
         // @todo –аботать с 16-битовыми PNG-источниками.
 
-        for (int y = 0; y < NI; ++y) {
-            const int yy = y + cy;
-            if ( (yy < -maxCanvas) || (yy > maxCanvas) ) {
-                // точка за границами холста
+        for (int y = (cy - maxCanvas); y <= (cy + maxCanvas); ++y) {
+            if ( (y < -halfSizeXY) || (y > halfSizeXY) ) {
+                // карта меньше холста
                 continue;
             }
-            for (int x = 0; x < NI; ++x) {
-                const int xx = x + cx;
-                if ( (xx < -maxCanvas) || (xx > maxCanvas) ) {
-                    // точка за границами холста
+
+            // интерполируем координаты XY на имеющуюс€ у нас карту высот
+            const float fy = static_cast< float >( y + cy );
+            const int yy = static_cast< int >( (fy > 0) ? std::ceil( fy ) : std::floor( fy ) );
+            //assert( ( (yy >= -maxCanvas) && (yy <= maxCanvas) )
+            //    && " онтроль границ Y должен был обеспечить 'imageResizer'." );
+            if ( (yy < -maxCanvas) || (yy > maxCanvas) ) {
+                // координата вне холста
+                continue;
+            }
+
+            for (int x = (cx - maxCanvas); x <= (cy + maxCanvas); ++x) {
+                if ( (x < -halfSizeXY) || (x > halfSizeXY) ) {
+                    // карта меньше холста
                     continue;
                 }
+
+                const float fx = static_cast< float >( x + cx );
+                const int xx = static_cast< int >( (fx > 0) ? std::ceil( fx ) : std::floor( fx ) );
+                //assert( ( (xx >= -maxCanvas) && (xx <= maxCanvas) )
+                //    && " онтроль границ X должен был обеспечить 'imageResizer'." );
+                if ( (xx < -maxCanvas) || (xx > maxCanvas) ) {
+                    // координата вне холста
+                    continue;
+                }
+
                 // ƒл€ каждой точки заполн€ем ось Z от -128 до (h - 128).
                 // ѕроходим по всему возможному диапазону значений высоты.
-                const int h = static_cast< int >( pixelValue(
-                    static_cast< size_t >( x ),
-                    static_cast< size_t >( y )
-                ) );
+                // «начени€ могут быть отрицательными, т.к. источником может
+                // быть карта размером меньше, чем размер холста 'nCanvas'.
+                // @todo ѕроверить поведение при малых изображени€х.
+                const float fpx = static_cast< float >( xx + halfSizeXY ) / imageScale;
+                const int px = static_cast< int >( (fpx > 0) ? std::ceil( fpx ) : std::floor( fpx ) );
+                const float fpy = static_cast< float >( yy + halfSizeXY ) / imageScale;
+                const int py = static_cast< int >( (fpy > 0) ? std::ceil( fpy ) : std::floor( fpy ) );
+                const int h = static_cast< int >( pixelValue( px, py ) );
 
                 // @todo optimize ’олостой цикл при FillT == false.
                 const int hd = h - 128;
                 for (int kz = -128; kz <= hd; ++kz) {
-                    const float fz = static_cast< float >( kz * static_cast< int >( height ) ) / 256.0f * 2.0f;
+                    const float fz = static_cast< float >( kz * static_cast< int >( height ) ) / 256.0f;
                     const int z = static_cast< int >( (fz > 0.0f) ? std::ceil( fz ) : std::floor( fz ) );
                     const int zz = z + cz;
                     if ( (zz < -maxCanvas) || (zz > maxCanvas) ) {
-                        // точка за границами холста
+                        // координата вне холста
                         continue;
                     }
+
                     const size_t nxx = static_cast< size_t >( xx + maxCanvas );
                     const size_t nyy = static_cast< size_t >( yy + maxCanvas );
                     const size_t nzz = static_cast< size_t >( zz + maxCanvas );
@@ -100,20 +187,21 @@ public:
                           // крайние точки (дно и вершина)
                              ( (kz == -128) || (kz == hd) )
                           // точки на границах холста
-                          || (nxx == 0) || (nxx == NP)
-                          || (nyy == 0) || (nyy == NP)
-                          || (nzz == 0) || (nzz == NP)
+                          || (nxx == 0) || (nxx == NB)
+                          || (nyy == 0) || (nyy == NB)
+                          || (nzz == 0) || (nzz == NB)
                         ) {
                             bc.set( nxx, nyy, nzz );
                         }
 
                     } // if ( FillT )
 
-                } // for (int kz = -127; kz < hd; ++kz)
+                } // for (int kz = ...
 
-            } // for (int x = 0; x < NI; ++x)
+            } // for (int x = ...
 
-        } // for (int y = 0; y < NI; ++y)
+        } // for (int y = ...
+
 
         // @test
         std::cout << "ќтмечено точек в карте высот: " << bc.count() << std::endl;
@@ -132,81 +220,14 @@ protected:
     * «начение точки с координатами (px, py) в источнике 'source' с интерпол€цией
     * координаты на область размером 'sizeXY'.
     */
-    inline unsigned char pixelValue( size_t px, size_t py ) const {
+    inline unsigned char pixelValue( int px, int py ) const {
 
-        // ѕри первом запросе читаем карту высот из 'source'
-        if ( !imageData ) {
-            imageReader = vtkSmartPointer< vtkPNGReader >::New();
-            /*
-            const char* fname =
-                vtkTestUtilities::ExpandDataFileName( 0, nullptr, source.c_str() );
-            reader->SetFileName( fname );
-            delete[] fname;
-            */
-            imageReader->SetFileName( source.c_str() );
-            imageReader->Update();
-            imageData = vtkImageData::SafeDownCast( imageReader->GetOutput() );
-
-            imageData->GetDimensions( dimension );
-            assert( (dimension[0] == dimension[1]) && "”меем работать только с квадратной картой высот. @todo" );
-            assert( ((dimension[0] * dimension[1]) > 0) && "»зображение карты высот не содержит данных." );
-
-            // изображение увеличивать не будем, но большое - уменьшим
-            if (dimension[0] > static_cast< int >( sizeXY ) ) {
-                const float k = static_cast< float >( sizeXY ) / static_cast< float >( dimension[0] );
-
-                /* - –аботает с €ркостью. «аменено. —м. ниже.
-                scaleFilter = vtkSmartPointer< vtkImageShiftScale >::New();
-                scaleFilter->SetOutputScalarTypeToUnsignedChar();
-#if VTK_MAJOR_VERSION <= 5
-                scaleFilter->SetInputConnection( imageData->GetProducerPort() );
-#else
-                scaleFilter->SetInputData( imageData );
-#endif
-                scaleFilter->SetScale( k );
-                scaleFilter->Update();
-
-                imageData = scaleFilter->GetOutput();
-                imageData->GetDimensions( dimension );
-            */
-                imageResizer = vtkSmartPointer< vtkImageResample >::New();
-                imageResizer->SetInput( imageData );
-                imageResizer->SetAxisMagnificationFactor( 0, k );
-                imageResizer->SetAxisMagnificationFactor( 1, k );
-#if VTK_MAJOR_VERSION <= 5
-                imageResizer->SetInputConnection( imageData->GetProducerPort() );
-#else
-                imageResizer->SetInputData( imageData );
-#endif
-                imageResizer->Update();
-
-                imageData = imageResizer->GetOutput();
-                imageData->GetDimensions( dimension );
-
-                /* @test
-                auto imageWriter = vtkSmartPointer< vtkPNGWriter >::New();
-                const std::string file = "V:/bin/debug-silhuette/pixelValue-ElevationMap-scale-test.png";
-                imageWriter->SetFileName( file.c_str() );
-                imageWriter->SetInput( imageData );
-                imageWriter->Write();
-                */
-
-            } // if (dimension[0] > static_cast< int >( sizeXY ) )
-
-#if VTK_MAJOR_VERSION <= 5
-            imageData->SetNumberOfScalarComponents( 1 );
-            imageData->SetScalarTypeToUnsignedChar();
-            imageData->AllocateScalars();
-#else
-            imageData->AllocateScalars( VTK_UNSIGNED_CHAR, 1 );
-#endif
-
-        } // if ( !imageData )
-
+        // »зображение подготовлено в конструкторе
 
         // “очки за пределами изображени€ считаем пропаст€ми
-        if ( (static_cast< int >( px ) >= dimension[0])
-          || (static_cast< int >( py ) >= dimension[1])
+        if (
+            (px < 0) || (px >= dimension[0])
+         || (py < 0) || (py >= dimension[1])
         ) {
             return 0;
         }
@@ -236,10 +257,11 @@ private:
     /**
     * ѕрочитанные из источника данные о высотах.
     */
-    mutable vtkSmartPointer< vtkPNGReader >  imageReader;
-    mutable vtkSmartPointer< vtkImageResample >  imageResizer;
-    mutable vtkImageData* imageData;
-    mutable int dimension[ 3 ];
+    vtkSmartPointer< vtkPNGReader >  imageReader;
+    float imageScale;
+    vtkSmartPointer< vtkImageResample >  imageResizer;
+    vtkImageData* imageData;
+    int dimension[ 3 ];
 
 };
 

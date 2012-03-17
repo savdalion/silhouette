@@ -129,7 +129,7 @@ int main( int argc, char** argv ) {
     // Добавляем к эскизу планету. Представим её как эллипсоид.
     // Радиусы указываем в метрах.
     // @source http://ru.wikipedia.org/wiki/%D0%97%D0%B5%D0%BC%D0%BB%D1%8F
-    typedef siu::EllipsoidES< true >  ellipsoid_t;
+    typedef siu::EllipsoidES< false >  ellipsoid_t;
     auto earth = std::shared_ptr< ellipsoid_t >(
         new ellipsoid_t( "Земля", "rock" )
     );
@@ -190,8 +190,8 @@ int main( int argc, char** argv ) {
         // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
         // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
         // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
-        const int hFloorCanvas = hCeilCanvas - 5;  // = 15 - 5 = 10;
-        assert( (hFloorCanvas == 10) && "Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
+        const int hFloorCanvas = hCeilCanvas - 5;
+        assert( (hFloorCanvas == 10) && "15 - 5 = 10. Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
         const int hObservation = 0;
         typedef siu::Canvas canvas_t;
         
@@ -222,7 +222,7 @@ int main( int argc, char** argv ) {
 
 
         // Визуализируем холст средствами VTK > http://vtk.org
-        siu::io::VTKVisual< 700, true, true >  visual;
+        siu::io::VTKVisual< 700, 1, true, true >  visual;
         visual << earthC;
         visual.wait();
 
@@ -285,8 +285,8 @@ int main( int argc, char** argv ) {
         // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
         // @see Комм. к холсту "Земля".
         const int hCeilCanvas = 14;
-        const int hFloorCanvas = hCeilCanvas - 5;  // = 15 - 5 = 10;
-        assert( (hFloorCanvas == 9) && "Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
+        const int hFloorCanvas = hCeilCanvas - 5;
+        assert( (hFloorCanvas == 9) && "14 - 5 = 9. Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
         const int hObservation = 0;
         typedef siu::Canvas canvas_t;
         
@@ -294,20 +294,20 @@ int main( int argc, char** argv ) {
         // @1 Позиционируем так, чтобы в центре холста оказалась Австралия
         const siu::RelativeCoord coordCanvasAustralia(
             hCeilSketch,
-            contentAustralia.c.x - australia->sizeXY / 2.0,
-            contentAustralia.c.y - australia->sizeXY / 2.0,
+            contentAustralia.c.x,
+            contentAustralia.c.y,
             // Z-позиция принимается 0-й по умолчанию, см. ElevationMap::draw()
             contentAustralia.c.z
         );
         canvas_t australiaC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasAustralia );
 #else        
         // @2 Позиционируем так, чтобы Австралия частично оказалась вне холста
-        const double australiaShift = 2000.0 * 1000.0;
+        const double australiaShift = 1500.0 * 1000.0;
         const siu::RelativeCoord coordCanvasAustralia(
             hCeilSketch,
-            contentAustralia.c.x - sc.get<0>() + australiaShift,
-            contentAustralia.c.y - sc.get<1>() + australiaShift,
-            contentAustralia.c.z - sc.get<2>() + australiaShift
+            contentAustralia.c.x + australiaShift,
+            contentAustralia.c.y + australiaShift,
+            contentAustralia.c.z + australiaShift
         );
         canvas_t australiaC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasAustralia );
 #endif
@@ -318,13 +318,104 @@ int main( int argc, char** argv ) {
 
 
         // Визуализируем холст средствами VTK > http://vtk.org
-        siu::io::VTKVisual< 700, true, true >  visual;
+        siu::io::VTKVisual< 700, 1, true, true >  visual;
         visual << australiaC;
         visual.wait();
 
     } // Холст "Австралия"
 
 
+
+}
+#endif
+
+
+
+
+
+
+
+
+#ifdef SIU_SHAPE_VISUALTEST_PART_MAINLAND
+{
+    // То же, что SIU_SHAPE_VISUALTEST_MAINLAND, но холст выбран
+    // меньшего размера
+
+    // Эскиз - размером с материк:
+    // 3^14 ~ 4.8 тыс. км
+    const int hCeilSketch = 14;
+    // 3^0 = 1 м
+    const int hFloorSketch = 0;
+    // здесь не привязываем материк к планете, простой тест
+    const siu::RelativeCoord rcParent( hCeilSketch + 1, 0.0, 0.0, 0.0 );
+    siu::Sketch mainlandS( rcParent, hCeilSketch, hFloorSketch );
+
+    // Добавляем к эскизу карту высот.
+    // Размеры - в метрах.
+    typedef siu::ElevationMapES< false >  elevationMap_t;
+    auto australia = std::shared_ptr< elevationMap_t >(
+        new elevationMap_t( "Австралия", "soil" )
+    );
+    australia->source = siu::PATH_MEDIA + "elevation-australia.png";
+    // континент располагаем в *привычном* виде
+    // @source http://geography.kz/kontinenty/obshhij-obzor-avstralii
+    // max( 4100.0, 3200.0 ) км
+    australia->sizeXY = 4100.0 * 1000.0;
+    // высота гор + глубина океана
+    // @source http://ru.wikipedia.org/wiki/%D0%A1%D0%BD%D0%BE%D1%83%D0%B8_%28%D0%B3%D0%BE%D1%80%D1%8B%29
+    australia->height = (2.2 + 0.3) * 1000.0;
+
+    // Австралия помещается в "горизонт материка"
+    const siu::Sketch::Content contentAustralia( australia, siu::RelativeCoord(
+        hCeilSketch,
+        0.0,
+        0.0,
+        0.0
+    ) );
+    mainlandS << contentAustralia;
+
+
+    // Подготовим холст для визуализации эскиза
+
+    // Холст "Часть Австралии"
+    {
+        // Размер:
+        // [ ~ "участок" (3^9 ~ 20 км); "область" (3^4 ~ 81 м) ]
+        // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
+        // @see Комм. к холсту "Земля".
+        const int hCeilCanvas = 9;
+        const int hFloorCanvas = hCeilCanvas - 5;
+        assert( (hFloorCanvas == 4) && "9 - 5 = 4. Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
+        const int hObservation = 0;
+        typedef siu::Canvas canvas_t;
+        
+#if 1
+        // @1 Холст располагаем т.о., чтобы видеть точно центр Австралии
+        const siu::RelativeCoord coordCanvasAustralia(
+            // позиционируем холст относительно горизонта "материк" (3^14)
+            hCeilSketch,
+            contentAustralia.c.x,
+            contentAustralia.c.y,
+            // Z-позиция принимается 0-й по умолчанию, см. ElevationMap::draw()
+            contentAustralia.c.z
+        );
+        canvas_t australiaC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasAustralia );
+#else        
+        // @2 ...
+#endif
+
+        // Помещаем на холст эскизы
+        // Холст сам преобразует элементы эскиза в элементы холста
+        australiaC << mainlandS;
+
+
+        // Визуализируем холст средствами VTK > http://vtk.org
+        siu::io::VTKVisual< 700, 1, true, true >  visual;
+        visual << australiaC;
+        visual.wait();
+
+    } // Холст "Австралия"
+    
 
 }
 #endif

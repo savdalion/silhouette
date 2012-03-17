@@ -68,6 +68,15 @@ public:
 
 
     /**
+    * @return Реальный размер в метрах, который охватывает эскиз.
+    */
+    inline double realSize() const {
+        return std::pow( static_cast< double >( K ),  hCeil );
+    }
+
+
+
+    /**
     * @return Глубина эскиза.
     */
     inline size_t depth() const {
@@ -77,7 +86,7 @@ public:
 
 
     /**
-    * @return Размер эскиза в одном измерении, м.
+    * @return Размер эскиза в одном измерении м.
     */
     inline double n() const {
         return std::pow( static_cast< double >( K ),  static_cast< int >( depth() ) );

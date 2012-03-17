@@ -40,7 +40,7 @@ namespace siu {
 */
 template<
     size_t sizeWindowT,
-    size_t sizePointT,
+    size_t sizePointT = 1,
     bool showCornerT = true,
     bool showAxesT = true
 >
@@ -89,7 +89,7 @@ public:
         assert( (content.size() == 1) && "Ожидалось увидеть на холсте единственное содержание." );
 
         // для центрирования
-        const float halfN = static_cast< float >( canvas.n() ) / 2.0f;
+        const float halfN = static_cast< float >( canvas.n() - 1 ) / 2.0f;
         const float shiftCenter = -halfN;
             
         auto points = vtkSmartPointer< vtkPoints >::New();
@@ -99,7 +99,25 @@ public:
             const size_t N = ctr->bm->N;
             assert( (N == canvas.n()) && "Размеры холстов должны совпадать." );
 
-            fillCloudPoints( points, vertices, shiftCenter, *ctr->bm );
+            if ( ctr->bm->empty() ) {
+                continue;
+            }
+            size_t i = ctr->bm->raw.get_first();
+            do {
+                size_t c[3];
+                ctr->bm->ci( c, i );
+                const float cf[3] = {
+                    static_cast< float >( c[0] ) + shiftCenter,
+                    static_cast< float >( c[1] ) + shiftCenter,
+                    static_cast< float >( c[2] ) + shiftCenter
+                };
+                vtkIdType pid[ 1 ];
+                // @todo optimize Использовать более быстрое заполнение точками и вершинами.
+                pid[ 0 ] = points->InsertNextPoint( cf );
+                vertices->InsertNextCell( 1, pid );
+
+                i = ctr->bm->raw.get_next( i );
+            } while (i != 0);
 
         } // for (auto ctr = content.cbegin(); ctr != content.cend(); ++ctr)
 
@@ -176,9 +194,14 @@ public:
 
             {
                 auto cubeAxesActor = vtkSmartPointer< vtkCubeAxesActor >::New();
-                cubeAxesActor->SetBounds(
-                    showCornerT ? cornerPoints->GetBounds() : points->GetBounds()
-                );
+                // Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
+                double bounds[6] = {
+                    -halfN,  halfN,
+                    -halfN,  halfN,
+                    -halfN,  halfN
+                };
+                cubeAxesActor->SetBounds( bounds );
+                //cubeAxesActor->SetBounds( points->GetBounds() );
                 cubeAxesActor->SetCamera( renderer->GetActiveCamera() );
                 cubeAxesActor->GetProperty()->SetColor( 0.3, 0.3, 0.3 );
                 //cubeAxesActor->SetXTitle( "X" );
@@ -217,62 +240,6 @@ public:
 
 
 
-
-
-private:
-    /**
-    * Переносит битовую карту Силуэта в формат VTK.
-    *
-    * @param center Смещение для всех точек наполняемого облака.
-    */
-    static inline void fillCloudPoints(
-        vtkSmartPointer< vtkPoints >  points,
-        vtkSmartPointer< vtkCellArray >  vertices,
-        float shiftCenter,
-        const BitContent3D& bc
-    ) {
-        /* - Переделано на do/while. Быстрее. См. ниже.
-        for (size_t z = 0; z < N; ++z) {
-            for (size_t y = 0; y < N; ++y) {
-                for (size_t x = 0; x < N; ++x) {
-                    if ( ctr->bm->test( x, y, z ) ) {
-                        const float c[3] = {
-                            static_cast< float >( x ) - halfN,
-                            static_cast< float >( y ) - halfN,
-                            static_cast< float >( z ) - halfN
-                        };
-                        vtkIdType pid[ 1 ];
-                        pid[ 0 ] = points->InsertNextPoint( c );
-                        vertices->InsertNextCell( 1, pid );
-                    }
-                }
-            }
-        } // for (int z = 0; z < N; ++z)
-        */
-
-        if ( bc.empty() ) {
-            return;
-        }
-
-        size_t i = bc.raw.get_first();
-        do {
-            size_t c[3];
-            bc.ci( c, i );
-            const float cf[3] = {
-                static_cast< float >( c[0] ) + shiftCenter,
-                static_cast< float >( c[1] ) + shiftCenter,
-                static_cast< float >( c[2] ) + shiftCenter
-            };
-            vtkIdType pid[ 1 ];
-            // @todo optimize Использовать более быстрое заполнение точками и вершинами.
-            pid[ 0 ] = points->InsertNextPoint( cf );
-            vertices->InsertNextCell( 1, pid );
-
-            i = bc.raw.get_next( i );
-
-        } while (i != 0);
-
-    }
 
 
 

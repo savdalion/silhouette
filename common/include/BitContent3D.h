@@ -6,6 +6,8 @@
 #include "default.h"
 
 
+namespace siu {
+
 
 /**
 * Содержание 3D, хранимое в виде битового образа.
@@ -44,7 +46,7 @@ struct BitContent3D {
 
 
     inline BitContent3D(
-        raw_t raw
+        const raw_t& raw
     ) :
         N( static_cast< size_t >( std::pow( raw.size(), 1.0 / 3.0 ) + 0.01 ) ),
         N2( N * N ),
@@ -400,3 +402,6 @@ struct BitContent3D {
 
 
 };
+
+
+}

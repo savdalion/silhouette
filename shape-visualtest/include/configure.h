@@ -16,9 +16,9 @@ const std::string PATH_MEDIA = "D:/Projects/workspace/silhouette/shape-visualtes
 /**
 * Показывать эти формы.
 */
-//#define SIU_SHAPE_VISUALTEST_PLANET_EARTH
+#define SIU_SHAPE_VISUALTEST_PLANET_EARTH
 //#define SIU_SHAPE_VISUALTEST_MAINLAND
-#define SIU_SHAPE_VISUALTEST_PART_MAINLAND
+//#define SIU_SHAPE_VISUALTEST_PART_MAINLAND
 
 
 }

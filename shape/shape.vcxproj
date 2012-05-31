@@ -54,6 +54,7 @@
     <Lib />
     <Lib>
       <AdditionalDependencies>vtkIO.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

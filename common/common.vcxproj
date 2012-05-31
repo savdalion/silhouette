@@ -51,6 +51,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib />
+    <Lib>
+      <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

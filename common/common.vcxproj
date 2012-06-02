@@ -69,19 +69,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\BitContent3D.h" />
-    <ClInclude Include="include\Canvas.h" />
-    <ClInclude Include="include\default.h" />
-    <ClInclude Include="include\Element.h" />
-    <ClInclude Include="include\ElementCanvas.h" />
-    <ClInclude Include="include\ElementSketch.h" />
-    <ClInclude Include="include\ElevationMapES.h" />
-    <ClInclude Include="include\EllipsoidES.h" />
+    <ClInclude Include="include\BitMapContent3D.h" />
     <ClInclude Include="include\configure.h" />
-    <ClInclude Include="include\PhysicsSolidES.h" />
-    <ClInclude Include="include\RelativeCoord.h" />
-    <ClInclude Include="include\Sketch.h" />
-    <ClInclude Include="include\SolidEC.h" />
+    <ClInclude Include="include\MapContent3D.h" />
+    <ClInclude Include="include\Shaper.h" />
+    <ClInclude Include="include\type.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -72,7 +72,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\configure.h" />
-    <ClInclude Include="include\ElevationMap.h" />
     <ClInclude Include="include\Ellipsoid.h" />
     <ClInclude Include="include\Shape.h" />
   </ItemGroup>

@@ -9,20 +9,44 @@ namespace siu {
 /**
 * Ёллипосид.
 *
-* @template FillT Ёллипсоид будет заполнен.
+* @template —м. Shape
 */
-template< bool FillT >
-class Ellipsoid : public Shape {
+template< size_t Grid >
+class Ellipsoid : public Shape< Grid > {
 public:
     /**
-    * Ёллипсоид создаЄтс€ по *диаметрам*: может понадобитс€ построить
-    * эллипсоид размером в 1 целую €чейку.
+    * –азмеры.
     */
+    const float rx;
+    const float ry;
+    const float rz;
+
+    /**
+    * Ѕудет ли элипсоид заполнен внутри.
+    */
+    const bool fill;
+
+    /**
+    * ¬спомогательный значени€.
+    */
+    float rMax;
+
+
+
+public:
+    template< typename IT >
     inline Ellipsoid(
-        size_t dx, size_t dy, size_t dz
-    ) : dx( dx ), dy( dy ), dz( dz ) {
-        assert( ( (dx > 0) && (dy > 0) && (dz > 0) )
-            && "¬се три диаметра должны быть указаны." );
+        IT rx, IT ry, IT rz,
+        bool fill
+    ) :
+        rx( static_cast< float >( rx ) ),
+        ry( static_cast< float >( ry ) ),
+        rz( static_cast< float >( rz ) ),
+        fill( fill ),
+        rMax( std::max( std::max( rx, ry ), rz ) )
+    {
+        assert( ( (rx > 0.0f) && (ry > 0.0f) && (rz > 0.0f) )
+            && "¬се три радиуса должны быть больше 0." );
     }
 
 
@@ -86,43 +110,65 @@ public:
         return bc;
     }
 
-#else
+#endif
 
-    // Ёллипсоид строитс€ прохождением по сетке холста
-    inline BitContent3D draw( size_t nCanvas, int cx, int cy, int cz ) const {
-        assert( nCanvas > 0 );
-        assert( ((nCanvas % 2) == 1) && " ол-во €чеек холста должно быть нечЄтным." );
 
-        const int maxCanvas = (nCanvas - 1) / 2;
-        BitContent3D bc( nCanvas );
 
-        // —оберЄм эллипсоид пробежав по всем €чейкам сетки, где он может располагатьс€
-        const size_t a = static_cast< size_t >( std::floor( static_cast< float >( dx ) / 2.0f + 0.001 ) );
-        const size_t b = static_cast< size_t >( std::floor( static_cast< float >( dy ) / 2.0f + 0.001 ) );
-        const size_t c = static_cast< size_t >( std::floor( static_cast< float >( dz ) / 2.0f + 0.001 ) );
+#if 0
+    /**
+    * @virtual Shape
+    *
+    * Ёллипсоид строитс€ прохождением по €чейкам сетки G.
+    */
+    virtual inline bm_t operator()() {
+
+        static const float grid = static_cast< float >( Grid );
+
+        // реальный размер 1 €чейки
+        const float sizeG = 2.0f * rMax / grid;
+
+        // нормализованный размер
+        const float normalRX = rx / rMax;
+        const float normalRY = ry / rMax;
+        const float normalRZ = rz / rMax;
+
+        // граничные координаты сетки
+        // (0, 0, 0) - центр
+        const int maxGCoord = (static_cast< int >( Grid ) - 1) / 2;
+        //const int minGCoord = -maxGCoord;
+
+        // смещение относительно центра
+        const common::coordInt_t shift( 0, 0, 0 );
+
+        // –аботаем с родительской структурой 'bm'
+
+        // —оберЄм эллипсоид пробежав по всем €чейкам сетки, где он *может* располагатьс€
+        const size_t a = static_cast< size_t >( std::floor( normalRX * grid + 0.001f ) );
+        const size_t b = static_cast< size_t >( std::floor( normalRY * grid + 0.001f ) );
+        const size_t c = static_cast< size_t >( std::floor( normalRZ * grid + 0.001f ) );
         const float a2 = static_cast< float >( a * a );
         const float b2 = static_cast< float >( b * b );
         const float c2 = static_cast< float >( c * c );
         const float step = 1.0f;
         for (float z = -static_cast< float >( c ); z <= static_cast< float >( c ); z += step) {
-            const int zz = static_cast< int >( z ) + cz;
-            if ( (zz < -maxCanvas) || (zz > maxCanvas) ) {
-                // точка за границами холста
+            const int zz = static_cast< int >( z ) + shift.z;
+            if ( (zz < -maxGCoord) || (zz > maxGCoord) ) {
+                // точка за границами карты
                 continue;
             }
             const float z2 = z * z;
             const float zr = z2 / c2;
             for (float y = -static_cast< float >( b ); y <= static_cast< float >( b ); y += step) {
-                const int yy = static_cast< int >( y ) + cy;
-                if ( (yy < -maxCanvas) || (yy > maxCanvas) ) {
+                const int yy = static_cast< int >( y ) + shift.y;
+                if ( (yy < -maxGCoord) || (yy > maxGCoord) ) {
                     // точка за границами холста
                     continue;
                 }
                 const float y2 = y * y;
                 const float yr = y2 / b2;
                 for (float x = -static_cast< float >( a ); x <= static_cast< float >( a ); x += step) {
-                    const int xx = static_cast< int >( x ) + cx;
-                    if ( (xx < -maxCanvas) || (xx > maxCanvas) ) {
+                    const int xx = static_cast< int >( x ) + shift.x;
+                    if ( (xx < -maxGCoord) || (xx > maxGCoord) ) {
                         // точка за границами холста
                         continue;
                     }
@@ -130,38 +176,84 @@ public:
                     const float xr = x2 / a2;
                     const float t = xr + yr + zr;
 
-                    if ( FillT ) {
+                    if ( fill ) {
                         // заполнен целиком
                         if (t < 1.001f) {
-                            bc.set( xx + maxCanvas,  yy + maxCanvas,  zz + maxCanvas );
+                            bm.set( xx, yy, zz );
                         }
                     } else {
                         // только поверхность
-                        if ( (t < 1.001f) && (t > 0.999) ) {
-                            bc.set( xx + maxCanvas,  yy + maxCanvas,  zz + maxCanvas );
+                        if ( (t < 1.001f) && (t > 0.999f) ) {
+                            bm.set( xx, yy,  zz );
                         }
                     }
                 }
             }
         } // for (float z = -static_cast< float >( c ); z <= static_cast< float >( c ); z += step)
 
-        // @test
-        std::cout << "ќтмечено точек в эллипсоиде: " << bc.count() << std::endl;
-
-        return bc;
+        return bm;
     }
-
 #endif
 
 
 
+    /**
+    * @virtual Shape
+    *
+    * Ёллипсоид строитс€ прохождением по *всем* €чейкам сетки G.
+    */
+    virtual inline bm_t operator()() {
 
+        static const float grid = static_cast< float >( Grid );
 
+        // реальный размер 1 €чейки
+        const float sizeG = 2.0f * rMax / grid;
 
-protected:
-    const size_t dx;
-    const size_t dy;
-    const size_t dz;
+        /* нормализованный размер
+        const float normalRX = rx / rMax;
+        const float normalRY = ry / rMax;
+        const float normalRZ = rz / rMax;
+        */
+
+        // граничные координаты сетки
+        // (0, 0, 0) - центр
+        const int maxGCoord = (static_cast< int >( Grid ) - 1) / 2;
+        const int minGCoord = -maxGCoord;
+
+        // смещение относительно центра
+        const common::coordInt_t shift( 0, 0, 0 );
+
+        // –аботаем с родительской структурой 'bm'
+
+        const float rx2 = rx * rx / (sizeG * sizeG);
+        const float ry2 = ry * ry / (sizeG * sizeG);
+        const float rz2 = rz * rz / (sizeG * sizeG);
+        for (int z = minGCoord; z <= maxGCoord; ++z) {
+            const float tz = static_cast< float >( z * z ) / rz2;
+            for (int y = minGCoord; y <= maxGCoord; ++y) {
+                const float ty = static_cast< float >( y * y ) / ry2;
+                for (int x = minGCoord; x <= maxGCoord; ++x) {
+                    const float tx = static_cast< float >( x * x ) / rx2;
+                    const float t = tx + ty + tz;
+                    if ( fill ) {
+                        // заполнен целиком
+                        if (t < 1.001f) {
+                            bm.set( x, y, z );
+                        }
+                    } else {
+                        // только поверхность
+                        if ( (t < 1.001f) && (t > 0.999f) ) {
+                            bm.set( x, y,  z );
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return bm;
+    }
+
 
 };
 

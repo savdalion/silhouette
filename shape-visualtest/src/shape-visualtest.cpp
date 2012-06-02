@@ -1,10 +1,7 @@
 #include "../include/StdAfx.h"
 #include "../include/configure.h"
-#include <Sketch.h>
-#include <RelativeCoord.h>
-#include <EllipsoidES.h>
-#include <ElevationMapES.h>
-#include <Canvas.h>
+#include <Shaper.h>
+#include <Ellipsoid.h>
 #include <VTKVisual.h>
 
 
@@ -16,6 +13,10 @@ int main( int argc, char** argv ) {
     setlocale( LC_ALL, "Russian" );
     // Для разделителя '.' вместо ','
     setlocale( LC_NUMERIC, "C" );
+
+
+    using namespace siu::common;
+    using namespace siu::shape;
 
 
     /* @example Облако случайных точек
@@ -110,313 +111,24 @@ int main( int argc, char** argv ) {
 
 
 
+    // (!) Форма и её визуализация, ничего лишнего
 
 
 
-
-#ifdef SIU_SHAPE_VISUALTEST_PLANET_EARTH
+#ifdef SIU_SHAPE_VISUALTEST_ELLIPSOID
 {
-    // Эскиз - размером с Пояс Койпера в Солнечной системе
-    // 3^27 ~ 7.6 млрд. км ~ 51 а.е. ~ 7 св. часов
-    const int hCeilSketch = 27;
-    // 3^0 = 1 м
-    const int hFloorSketch = 0;
-    typedef siu::Sketch sketch_t;
-    typedef siu::RelativeCoord coord_t;
-    const coord_t rcParent( hCeilSketch + 1, 0.0, 0.0, 0.0 );
-    sketch_t solarSystemS( rcParent, hCeilSketch, hFloorSketch );
+    const size_t GRID = 81;
+    const auto rz = 6000.0 * 1000.0;
+    const auto rx = rz * 1.8;
+    const auto ry = rz * 1.2;
+    Ellipsoid< GRID >  elli( rx, ry, rz, true );
+    const Shaper< GRID >  shaper( &elli );
+    const auto bm = shaper.draw( /* @todo область */ );
 
-    // Добавляем к эскизу планету. Представим её как эллипсоид.
-    // Радиусы указываем в метрах.
-    // @source http://ru.wikipedia.org/wiki/%D0%97%D0%B5%D0%BC%D0%BB%D1%8F
-    typedef siu::EllipsoidES< false >  ellipsoid_t;
-    auto earth = std::shared_ptr< ellipsoid_t >(
-        new ellipsoid_t( "Земля", "rock" )
-    );
-    earth->rz = 6356.8 * 1000.0;
-    earth->rx = earth->ry = earth->rz * 1.0033528;
-    earth->density = 5515.3;
-
-    const sketch_t::Content contentEarth( earth, coord_t(
-        hCeilSketch,
-        // Солнце - центр системы - (0; 0), орбита планеты - в метрах
-        (152097701.0 + 147098074.0) / 2.0 * 1000.0,
-        0.0,
-        0.0
-    ) );
-    solarSystemS << contentEarth;
-
-
-    // Подготовим холст для визуализации эскиза
-
-    // Холст "Солнечная система"
-    {
-        /* - @todo ...
-        // Размер:
-        // [ ~ "пояс Койпера" (3^27 ~ 7.6 млрд. км);  ~ "орбита Меркурия" (3^22 ~ 31.4 млн. км) ]
-        // Наблюдение за элементами размером с "сегмент" (3^13 ~ 1600 км) и больше.
-        // Наблюдаемые элементы, размером от "сегмента" до "орбиты меркурия"
-        // располагаются на холсте отдельно и без дополнительной обработки
-        // (растрирования), т.к. их размер меньше ячейки дна этого холста.
-        // Элементы, попав на холст, степень детализации которого меньше их
-        // размеров, визуализируются точками.
-        const int hCeilCanvas = hCeilSketch;
-        // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
-        // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
-        // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
-        const int hFloorCanvas = hCeilCanvas - 5;  // = 27 - 5 = 22;
-        assert( (hFloorCanvas == 22) && "Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
-        const int hObservation = 13;
-        typedef siu::Canvas< K >  canvas_t;
-        canvas_t solarSystemC( hCeilCanvas, hFloorCanvas, hObservation );
-
-        solarSystemC << solarSystemS;
-        ...
-        */
-    }
-
-
-    // Холст "Земля"
-    {
-        // Размер:
-        // [ ~ "планета" (3^15 ~ 14.3 тыс. км) ;  ~ "" (3^10 ~ 59 км) ]
-        // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
-        // Наблюдаемые элементы, размером от "эталона" до ~59 км (см. размер выше)
-        // располагаются на холсте отдельно и без дополнительной обработки
-        // (растрирования), т.к. их размер меньше ячейки дна этого холста.
-        // Элементы, попав на холст, степень детализации которого меньше их
-        // размеров, визуализируются точками.
-        const int hCeilCanvas = 15;
-        // Глубина холста не превышает 5, т.к. на ПК 2012 г. обрабатывать
-        // 3^5^3 = 243^3 = 14 348 907 ячеек близко к практическому пределу, если
-        // планируем создать динамическую "реалтайм-систему", а не научную таблицу.
-        const int hFloorCanvas = hCeilCanvas - 5;
-        assert( (hFloorCanvas == 10) && "15 - 5 = 10. Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
-        const int hObservation = 0;
-        typedef siu::Canvas canvas_t;
-        
-#if 1
-        // @1 Позиционируем так, чтобы в центре холста оказалась Земля
-        const siu::RelativeCoord coordCanvasEarth(
-            hCeilSketch,
-            contentEarth.c.x,
-            contentEarth.c.y,
-            contentEarth.c.z
-        );
-        canvas_t earthC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasEarth );
-#else        
-        // @2 Позиционируем так, чтобы Земля частично оказалась вне холста
-        const double earthShift = 6000.0 * 1000.0;
-        const siu::RelativeCoord coordCanvasEarth(
-            hCeilSketch,
-            contentEarth.c.x + earthShift,
-            contentEarth.c.y + earthShift,
-            contentEarth.c.z + earthShift
-        );
-        canvas_t earthC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasEarth );
-#endif
-
-        // Помещаем на холст эскизы
-        // Холст сам преобразует элементы эскиза в элементы холста
-        earthC << solarSystemS;
-
-
-        // Визуализируем холст средствами VTK > http://vtk.org
-        siu::io::VTKVisual< 700, 1, true, true >  visual;
-        visual << earthC;
-        visual.wait();
-
-    } // Холст "Земля"
-
-
-
-}
-#endif
-
-
-
-
-
-
-
-
-#ifdef SIU_SHAPE_VISUALTEST_MAINLAND
-{
-    // Эскиз - размером с материк:
-    // 3^14 ~ 4.8 тыс. км
-    const int hCeilSketch = 14;
-    // 3^0 = 1 м
-    const int hFloorSketch = 0;
-    // здесь не привязываем материк к планете, простой тест
-    const siu::RelativeCoord rcParent( hCeilSketch + 1, 0.0, 0.0, 0.0 );
-    siu::Sketch mainlandS( rcParent, hCeilSketch, hFloorSketch );
-
-    // Добавляем к эскизу карту высот.
-    // Размеры - в метрах.
-    typedef siu::ElevationMapES< false >  elevationMap_t;
-    auto australia = std::shared_ptr< elevationMap_t >(
-        new elevationMap_t( "Австралия", "soil" )
-    );
-    australia->source = siu::PATH_MEDIA + "elevation-australia.png";
-    // континент располагаем в *привычном* виде
-    // @source http://geography.kz/kontinenty/obshhij-obzor-avstralii
-    // max( 4100.0, 3200.0 ) км
-    australia->sizeXY = 4100.0 * 1000.0;
-    // высота гор + глубина океана
-    // @source http://ru.wikipedia.org/wiki/%D0%A1%D0%BD%D0%BE%D1%83%D0%B8_%28%D0%B3%D0%BE%D1%80%D1%8B%29
-    australia->height = (2.2 + 0.3) * 1000.0;
-
-    // Австралия помещается в "горизонт материка"
-    const siu::Sketch::Content contentAustralia( australia, siu::RelativeCoord(
-        hCeilSketch,
-        0.0,
-        0.0,
-        0.0
-    ) );
-    mainlandS << contentAustralia;
-
-
-    // Подготовим холст для визуализации эскиза
-
-    // Холст "Австралия"
-    {
-        // Размер:
-        // [ ~ "материк" (3^14 ~ 4.8 тыс. км) ;  ~ "участок" (3^9 ~ 20 км) ]
-        // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
-        // @see Комм. к холсту "Земля".
-        const int hCeilCanvas = 14;
-        const int hFloorCanvas = hCeilCanvas - 5;
-        assert( (hFloorCanvas == 9) && "14 - 5 = 9. Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
-        const int hObservation = 0;
-        typedef siu::Canvas canvas_t;
-        
-#if 1
-        // @1 Позиционируем так, чтобы в центре холста оказалась Австралия
-        const siu::RelativeCoord coordCanvasAustralia(
-            hCeilSketch,
-            contentAustralia.c.x,
-            contentAustralia.c.y,
-            // Z-позиция принимается 0-й по умолчанию, см. ElevationMap::draw()
-            contentAustralia.c.z
-        );
-        canvas_t australiaC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasAustralia );
-#else        
-        // @2 Позиционируем так, чтобы Австралия частично оказалась вне холста
-        const double australiaShift = 1500.0 * 1000.0;
-        const siu::RelativeCoord coordCanvasAustralia(
-            hCeilSketch,
-            contentAustralia.c.x + australiaShift,
-            contentAustralia.c.y + australiaShift,
-            contentAustralia.c.z + australiaShift
-        );
-        canvas_t australiaC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasAustralia );
-#endif
-
-        // Помещаем на холст эскизы
-        // Холст сам преобразует элементы эскиза в элементы холста
-        australiaC << mainlandS;
-
-
-        // Визуализируем холст средствами VTK > http://vtk.org
-        siu::io::VTKVisual< 700, 1, true, true >  visual;
-        visual << australiaC;
-        visual.wait();
-
-    } // Холст "Австралия"
-
-
-
-}
-#endif
-
-
-
-
-
-
-
-
-#ifdef SIU_SHAPE_VISUALTEST_PART_MAINLAND
-{
-    // То же, что SIU_SHAPE_VISUALTEST_MAINLAND, но холст выбран
-    // меньшего размера
-
-    // Эскиз - размером с материк:
-    // 3^14 ~ 4.8 тыс. км
-    const int hCeilSketch = 14;
-    // 3^0 = 1 м
-    const int hFloorSketch = 0;
-    // здесь не привязываем материк к планете, простой тест
-    const siu::RelativeCoord rcParent( hCeilSketch + 1, 0.0, 0.0, 0.0 );
-    siu::Sketch mainlandS( rcParent, hCeilSketch, hFloorSketch );
-
-    // Добавляем к эскизу карту высот.
-    // Размеры - в метрах.
-    typedef siu::ElevationMapES< false >  elevationMap_t;
-    auto australia = std::shared_ptr< elevationMap_t >(
-        new elevationMap_t( "Австралия", "soil" )
-    );
-    australia->source = siu::PATH_MEDIA + "elevation-australia.png";
-    // континент располагаем в *привычном* виде
-    // @source http://geography.kz/kontinenty/obshhij-obzor-avstralii
-    // max( 4100.0, 3200.0 ) км
-    australia->sizeXY = 4100.0 * 1000.0;
-    // высота гор + глубина океана
-    // @source http://ru.wikipedia.org/wiki/%D0%A1%D0%BD%D0%BE%D1%83%D0%B8_%28%D0%B3%D0%BE%D1%80%D1%8B%29
-    australia->height = (2.2 + 0.3) * 1000.0;
-
-    // Австралия помещается в "горизонт материка"
-    const siu::Sketch::Content contentAustralia( australia, siu::RelativeCoord(
-        hCeilSketch,
-        0.0,
-        0.0,
-        0.0
-    ) );
-    mainlandS << contentAustralia;
-
-
-    // Подготовим холст для визуализации эскиза
-
-    // Холст "Часть Австралии"
-    {
-        // Размер:
-        // [ ~ "участок" (3^9 ~ 20 км); "область" (3^4 ~ 81 м) ]
-        // Наблюдение за элементами размером с "эталон" (3^0 ~ 1 м) и больше.
-        // @see Комм. к холсту "Земля".
-        const int hCeilCanvas = 9;
-        const int hFloorCanvas = hCeilCanvas - 5;
-        assert( (hFloorCanvas == 4) && "9 - 5 = 4. Если это не ошибка, исправьте и здесь пороговое значение горизонта." );
-        const int hObservation = 0;
-        typedef siu::Canvas canvas_t;
-        
-#if 1
-        // @1 Холст располагаем т.о., чтобы видеть точно центр Австралии
-        const siu::RelativeCoord coordCanvasAustralia(
-            // позиционируем холст относительно горизонта "материк" (3^14)
-            hCeilSketch,
-            contentAustralia.c.x,
-            contentAustralia.c.y,
-            // Z-позиция принимается 0-й по умолчанию, см. ElevationMap::draw()
-            contentAustralia.c.z
-        );
-        canvas_t australiaC( hCeilCanvas, hFloorCanvas, hObservation, coordCanvasAustralia );
-#else        
-        // @2 ...
-#endif
-
-        // Помещаем на холст эскизы
-        // Холст сам преобразует элементы эскиза в элементы холста
-        australiaC << mainlandS;
-
-
-        // Визуализируем холст средствами VTK > http://vtk.org
-        siu::io::VTKVisual< 700, 1, true, true >  visual;
-        visual << australiaC;
-        visual.wait();
-
-    } // Холст "Австралия"
-    
-
+    // Визуализируем холст средствами VTK > http://vtk.org
+    siu::io::VTKVisual< 700, 2, true, true >  visual;
+    visual << bm;
+    visual.wait();
 }
 #endif
 

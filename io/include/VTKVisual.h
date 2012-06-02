@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Canvas.h>
+#include <type.h>
+#include <BitMapContent3D.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>
@@ -81,45 +82,34 @@ public:
     * Визуализирует холст. Если окно визуализации ещё не было создано, оно
     * создаётся. Иначе, холст добавляется к текущему окну.
     */
-    inline VTKVisual& operator<<( const Canvas& canvas ) {
+    template< size_t Grid >
+    inline VTKVisual& operator<<( const common::BitMapContent3D< Grid >& bm ) {
 
         // Переводим полученный холст в формат VTK
         // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
-        const auto& content = canvas.content();
-        assert( (content.size() == 1) && "Ожидалось увидеть на холсте единственное содержание." );
 
-        // для центрирования
-        const float halfN = static_cast< float >( canvas.n() - 1 ) / 2.0f;
-        const float shiftCenter = -halfN;
+        // для центрирования и отметок границ секти
+        const float halfN = static_cast< float >( Grid - 1 ) / 2.0f;
+        const float shiftCenter = 0.0f;
             
         auto points = vtkSmartPointer< vtkPoints >::New();
         auto vertices = vtkSmartPointer< vtkCellArray >::New();
-        for (auto ctr = content.cbegin(); ctr != content.cend(); ++ctr) {
-            // размер холста в одном измерении
-            const size_t N = ctr->bm->N;
-            assert( (N == canvas.n()) && "Размеры холстов должны совпадать." );
 
-            if ( ctr->bm->empty() ) {
-                continue;
-            }
-            size_t i = ctr->bm->raw.get_first();
-            do {
-                size_t c[3];
-                ctr->bm->ci( c, i );
-                const float cf[3] = {
-                    static_cast< float >( c[0] ) + shiftCenter,
-                    static_cast< float >( c[1] ) + shiftCenter,
-                    static_cast< float >( c[2] ) + shiftCenter
-                };
-                vtkIdType pid[ 1 ];
-                // @todo optimize Использовать более быстрое заполнение точками и вершинами.
-                pid[ 0 ] = points->InsertNextPoint( cf );
-                vertices->InsertNextCell( 1, pid );
+        size_t i = bm.raw.get_first();
+        do {
+            const siu::common::coordInt_t c = bm.ci( i );
+            const float cf[3] = {
+                static_cast< float >( c.x ) + shiftCenter,
+                static_cast< float >( c.y ) + shiftCenter,
+                static_cast< float >( c.z ) + shiftCenter
+            };
+            vtkIdType pid[ 1 ];
+            // @todo optimize Использовать более быстрое заполнение точками и вершинами.
+            pid[ 0 ] = points->InsertNextPoint( cf );
+            vertices->InsertNextCell( 1, pid );
 
-                i = ctr->bm->raw.get_next( i );
-            } while (i != 0);
-
-        } // for (auto ctr = content.cbegin(); ctr != content.cend(); ++ctr)
+            i = bm.raw.get_next( i );
+        } while (i != 0);
 
 
         auto point = vtkSmartPointer< vtkPolyData >::New(); 

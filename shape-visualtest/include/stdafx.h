@@ -69,3 +69,5 @@
 #include <vtkPoints.h>
 #include <vtkCellArray.h>
 #include <vtkProperty.h>
+
+#include <coord-type.h>

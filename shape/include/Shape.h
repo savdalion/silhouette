@@ -1,8 +1,7 @@
 #pragma once
 
-#include <type.h>
-#include <BitMapContent3D.h>
-#include <math.h>
+#include <coord-type.h>
+#include <BitMap.h>
 
 
 
@@ -18,11 +17,11 @@ namespace siu {
 template< size_t Grid >
 class Shape {
 public:
-    typedef common::BitMapContent3D< Grid >  bm_t;
+    typedef common::BitMap< Grid >  bm_t;
 
 
 public:
-    inline Shape() : bm( false ) {
+    inline Shape() : bm() {
         static_assert( (Grid != 0), " оличество €чеек дл€ битовой карты необходимо указать." );
     }
 
@@ -38,7 +37,76 @@ public:
     *
     * @param np 
     */
-    virtual bm_t operator()() = 0;
+    virtual bm_t operator()(
+        const typelib::coord_t& areaMin = typelib::coord_t::ZERO,
+        const typelib::coord_t& areaMax = typelib::coord_t::ZERO
+    ) = 0;
+
+
+
+
+    /**
+    * @return ћаксимальный размер формы по одной из коорд. осей.
+    *
+    * @see sizeGrid()
+    */
+    virtual float sizeMax() const = 0;
+
+
+
+
+    /**
+    * @return –азмер одной €чейки сетки. –азмер выбираетс€ т.о., чтобы фигура
+    *         полностью помещалась в кубе со стороной Grid.
+    */
+    virtual inline float sizeGrid() const {
+        return sizeMax() / static_cast< float >( Grid );
+    }
+
+
+
+    /**
+    * @return «аданна€ кордината лежит в указанных границах сетки фигуры.
+    *
+    * @see outside()
+    */
+    inline bool inside(
+        int x, int y, int z,
+        const typelib::coord_t& areaMin,
+        const typelib::coord_t& areaMax
+    ) {
+        return !outside( x, y, z, araeMin, areaMax );
+    }
+
+
+
+
+
+    /**
+    * @return «аданна€ кордината лежит за границами сетки фигуры.
+    */
+    inline bool outside(
+        // координаты €чейки
+        int x, int y, int z,
+        // контрольна€ область (попадание = в пределах границы)
+        const typelib::coord_t& areaMin,
+        const typelib::coord_t& areaMax
+    ) {
+        assert( !empty(areaMin - areaMax)
+            && " онтрольна€ область не может быть пустой." );
+        assert( (areaMin < areaMax)
+            && " онтрольна€ область задаЄтс€ меньшей и большей координатами коробки. »менно в таком пор€дке." );
+
+        const float sizeG = sizeGrid();
+        const float wx = static_cast< float >( x ) * sizeG;
+        const float wy = static_cast< float >( y ) * sizeG;
+        const float wz = static_cast< float >( z ) * sizeG;
+        return ( (wx < areaMin.x) || (wx > areaMax.x) )
+            || ( (wy < areaMin.y) || (wy > areaMax.y) )
+            || ( (wz < areaMin.z) || (wz > areaMax.z) )
+        ;
+    }
+
 
 
 

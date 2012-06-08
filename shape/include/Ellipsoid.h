@@ -26,11 +26,6 @@ public:
     */
     const bool fill;
 
-    /**
-    * Вспомогательный значения.
-    */
-    float rMax;
-
 
 
 public:
@@ -42,8 +37,7 @@ public:
         rx( static_cast< float >( rx ) ),
         ry( static_cast< float >( ry ) ),
         rz( static_cast< float >( rz ) ),
-        fill( fill ),
-        rMax( std::max( std::max( rx, ry ), rz ) )
+        fill( fill )
     {
         assert( ( (rx > 0.0f) && (ry > 0.0f) && (rz > 0.0f) )
             && "Все три радиуса должны быть больше 0." );
@@ -138,7 +132,7 @@ public:
         //const int minGCoord = -maxGCoord;
 
         // смещение относительно центра
-        const common::coordInt_t shift( 0, 0, 0 );
+        const typelib::coordInt_t shift( 0, 0, 0 );
 
         // Работаем с родительской структурой 'bm'
 
@@ -202,13 +196,10 @@ public:
     *
     * Эллипсоид строится прохождением по *всем* ячейкам сетки G.
     */
-    virtual inline bm_t operator()() {
-
-        static const float grid = static_cast< float >( Grid );
-
-        // реальный размер 1 ячейки
-        const float sizeG = 2.0f * rMax / grid;
-
+    virtual inline bm_t operator()(
+        const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
+        const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
+    ) {
         /* нормализованный размер
         const float normalRX = rx / rMax;
         const float normalRY = ry / rMax;
@@ -220,11 +211,18 @@ public:
         const int maxGCoord = (static_cast< int >( Grid ) - 1) / 2;
         const int minGCoord = -maxGCoord;
 
+        // масштаб будет изменён, если указана не пустая область
+        if ( !empty(areaMin - areaMax) ) {
+            // (!) Коряво получается, когда в сетку требуется получить лишь часть фигуры.
+            assert( false && "@todo Не реализовано." );
+        }
+
         // смещение относительно центра
-        const common::coordInt_t shift( 0, 0, 0 );
+        const typelib::coordInt_t shift( 0, 0, 0 );
 
         // Работаем с родительской структурой 'bm'
 
+        const float sizeG = sizeGrid();
         const float rx2 = rx * rx / (sizeG * sizeG);
         const float ry2 = ry * ry / (sizeG * sizeG);
         const float rz2 = rz * rz / (sizeG * sizeG);
@@ -233,6 +231,11 @@ public:
             for (int y = minGCoord; y <= maxGCoord; ++y) {
                 const float ty = static_cast< float >( y * y ) / ry2;
                 for (int x = minGCoord; x <= maxGCoord; ++x) {
+                    /* - @todo Контролировать области. См. @todo выше.
+                    if ( outside( x, y, z, areaMin, areaMax ) ) {
+                        continue;
+                    }
+                    */
                     const float tx = static_cast< float >( x * x ) / rx2;
                     const float t = tx + ty + tz;
                     if ( fill ) {
@@ -252,6 +255,15 @@ public:
         }
 
         return bm;
+    }
+
+
+
+
+
+    virtual inline float sizeMax() const {
+        const float rMax = std::max( std::max( rx, ry ), rz );
+        return 2.0f * rMax;
     }
 
 

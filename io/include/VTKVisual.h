@@ -1,13 +1,15 @@
 #pragma once
 
-#include <type.h>
-#include <BitMapContent3D.h>
+#include <BitMap.h>
+#include <other-type.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
+#include <vtkLight.h>
+#include <vtkLightCollection.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
@@ -30,7 +32,7 @@ namespace siu {
 
 
 /**
-* Визуализация средствами VTK.
+* Визуализация средствами VTK в виде облака точек.
 *
 * @template sizeWindowT Размер окна визуализации, пкс. Окно - квадратное.
 * @template sizePointT Размер точки, пкс.
@@ -67,6 +69,17 @@ public:
         camera->SetPosition( 0, -1, 0 );
         camera->SetFocalPoint( 0, 0, 0 );
         //camera->SetViewUp( 0, 1, 1 );
+
+        /* @todo Добавляем освещение
+        vtkLightCollection* lc = vtkLightCollection::New();
+
+        vtkLight* lTop = vtkLight::New();
+        lTop->SetPosition( 1.0, 0, 0 );
+        lTop->SetColor( 0.5, 1.0, 0.5 );
+
+        lc->AddItem( lTop );
+        renderer->SetLightCollection( lc );
+        */
     }
 
 
@@ -83,7 +96,7 @@ public:
     * создаётся. Иначе, холст добавляется к текущему окну.
     */
     template< size_t Grid >
-    inline VTKVisual& operator<<( const common::BitMapContent3D< Grid >& bm ) {
+    inline VTKVisual& operator<<( const common::BitMap< Grid >&  bm ) {
 
         // Переводим полученный холст в формат VTK
         // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
@@ -97,7 +110,7 @@ public:
 
         size_t i = bm.raw.get_first();
         do {
-            const siu::common::coordInt_t c = bm.ci( i );
+            const typelib::coordInt_t c = bm.ci( i );
             const float cf[3] = {
                 static_cast< float >( c.x ) + shiftCenter,
                 static_cast< float >( c.y ) + shiftCenter,

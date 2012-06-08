@@ -21,5 +21,8 @@
     <ClInclude Include="include\VTKVisual.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="include\SurfaceVTKVisual.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

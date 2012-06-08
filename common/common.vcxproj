@@ -37,10 +37,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(BOOST_ROOT);D:\Projects\workspace\utils\bm3.7.0\src;D:\Projects\workspace\silhouette\shape\include;$(IncludePath)</IncludePath>
-    <IntDir>V:\temp\debug-silhuette\$(MSBuildProjectName)\</IntDir>
+    <IncludePath>$(BOOST_ROOT);D:\Projects\workspace\utils\bm3.7.0\src;D:\Projects\workspace\typelib\include;D:\Projects\workspace\silhouette\shape\include;$(IncludePath)</IncludePath>
+    <IntDir>V:\temp\debug-silhouette\$(MSBuildProjectName)\</IntDir>
     <LibraryPath>$(BOOST_ROOT)\stage\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>V:\bin\debug-silhuette\</OutDir>
+    <OutDir>V:\bin\debug-silhouette\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -69,11 +69,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\BitMapContent3D.h" />
+    <ClInclude Include="include\BitMap.h" />
     <ClInclude Include="include\configure.h" />
-    <ClInclude Include="include\MapContent3D.h" />
     <ClInclude Include="include\Shaper.h" />
-    <ClInclude Include="include\type.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

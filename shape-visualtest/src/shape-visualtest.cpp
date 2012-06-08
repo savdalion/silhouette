@@ -2,7 +2,10 @@
 #include "../include/configure.h"
 #include <Shaper.h>
 #include <Ellipsoid.h>
+#include <ElevationMap.h>
+#include <OutlineFilterMapContent.h>
 #include <VTKVisual.h>
+#include <SurfaceVTKVisual.h>
 
 
 /**
@@ -15,107 +18,15 @@ int main( int argc, char** argv ) {
     setlocale( LC_NUMERIC, "C" );
 
 
+    using namespace siu;
     using namespace siu::common;
     using namespace siu::shape;
-
-
-    /* @example Облако случайных точек
-    // @source http://www.vtk.org/Wiki/VTK/Examples/Cxx/PolyData/PointSource
-
-    auto pointSource = vtkSmartPointer< vtkPointSource >::New();
-    pointSource->SetCenter( 0.0, 0.0, 0.0 );
-    pointSource->SetNumberOfPoints( 500 );
-    pointSource->SetRadius( 5.0 );
-    pointSource->Update();
- 
-    // Create a mapper and actor
-    auto mapper = vtkSmartPointer< vtkPolyDataMapper >::New();
-    mapper->SetInputConnection( pointSource->GetOutputPort() );
- 
-    auto actor = vtkSmartPointer< vtkActor >::New();
-    actor->SetMapper( mapper );
- 
-    // Create a renderer, render window, and interactor
-    auto renderer = vtkSmartPointer< vtkRenderer >::New();
-    auto renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->AddRenderer( renderer );
-    auto renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    renderWindowInteractor->SetRenderWindow( renderWindow );
- 
-    // Add the actor to the scene
-    renderer->AddActor( actor );
-    renderer->SetBackground( 0.3, 0.6, 0.3 );
- 
-    // Render and interact
-    renderWindow->Render();
-    renderWindowInteractor->Start();
-    */
-
-
-
-
-
-    /* @example Блок точек
-    const int N = 30;
-    const int M = 20;
-    const int L = 10;
-    // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
-    auto points = vtkSmartPointer< vtkPoints >::New();
-    auto vertices = vtkSmartPointer< vtkCellArray >::New();
-    for (int z = 0; z < L; ++z) {
-        for (int y = 0; y < M; ++y) {
-            for (int x = 0; x < N; ++x) {
-                //const int i = x + y * N + z * N * M;
-                vtkIdType pid[ 1 ];
-                pid[ 0 ] =
-                    points->InsertNextPoint( (float)x, (float)y, (float)z );
-                vertices->InsertNextCell( 1, pid );
-            }
-        }
-    }
-
-    // Create a polydata object
-    auto point = vtkSmartPointer< vtkPolyData >::New();
- 
-    // Set the points and vertices we created as the geometry
-    // and topology of the polydata
-    point->SetPoints( points );
-    point->SetVerts( vertices );
- 
-    // Visualize
-    auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-#if VTK_MAJOR_VERSION <= 5
-    mapper->SetInput( point );
-#else
-    mapper->SetInputData( point );
-#endif
- 
-    auto actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper( mapper );
-    actor->GetProperty()->SetPointSize( 1 );
- 
-    auto renderer = vtkSmartPointer<vtkRenderer>::New();
-    auto renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->AddRenderer( renderer );
-    renderWindow->SetSize( 700, 500 );
-    auto renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    renderWindowInteractor->SetRenderWindow( renderWindow );
- 
-    renderer->AddActor( actor );
- 
-    renderWindow->Render();
-    renderWindowInteractor->Start();
-
-    */
-
-
 
 
     // (!) Форма и её визуализация, ничего лишнего
 
 
-
-#ifdef SIU_SHAPE_VISUALTEST_ELLIPSOID
+#ifdef ELLIPSOID_SHAPE_SIU_VISUALTEST
 {
     const size_t GRID = 81;
     const auto rz = 6000.0 * 1000.0;
@@ -123,10 +34,48 @@ int main( int argc, char** argv ) {
     const auto ry = rz * 1.2;
     Ellipsoid< GRID >  elli( rx, ry, rz, true );
     const Shaper< GRID >  shaper( &elli );
-    const auto bm = shaper.draw( /* @todo область */ );
+    // извлекаем квадрант эллипса
+    const auto bm = shaper.draw(
+        //coord_t( -rx, 0.0f, -rz ),
+        //coord_t( 0.0f, ry, rz )
+    );
 
     // Визуализируем холст средствами VTK > http://vtk.org
     siu::io::VTKVisual< 700, 2, true, true >  visual;
+    visual << bm;
+    visual.wait();
+}
+#endif
+
+
+
+
+#ifdef ELEVATION_MAP_SHAPE_SIU_VISUALTEST
+{
+    const size_t GRID = 81;
+    const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
+    // картинка протяжённостью 400 пкс или ~200 км согласно Google Earth
+    // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7
+    const auto scaleXY = 200.0 / 400.0;
+    // @todo Не отрабатывает правильно масштаб. Исправить.
+    const auto hMin = -10.0;
+    const auto hMax = 20.0;
+    ElevationMap< GRID >  elm( source, scaleXY, hMin, hMax, true );
+    const Shaper< GRID >  shaper( &elm );
+    auto bm = shaper.draw();
+
+    // Оставляем только внешний контур
+    OutlineFilterMapContent fmc;
+    fmc( bm );
+
+
+    // Визуализируем холст средствами VTK > http://vtk.org
+#ifdef SURFACE_VISUAL_SIU_VISUALTEST
+    siu::io::SurfaceVTKVisual< 700, 1, true, true >  visual;
+#else
+    siu::io::VTKVisual< 700, 1, true, true >  visual;
+#endif
     visual << bm;
     visual.wait();
 }

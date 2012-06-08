@@ -1,10 +1,8 @@
 #pragma once
 
-#include "type.h"
-#include "BitMapContent3D.h"
+#include "BitMap.h"
+#include <coord-type.h>
 #include <Shape.h>
-#include <math.h>
-
 
 
 namespace siu {
@@ -29,13 +27,11 @@ public:
     /**
     * @return Форма в виде облака точек (битовой карты).
     */
-    inline BitMapContent3D< Grid > draw(
-        /* - @todo
-        const coord_t& areaMin,
-        const coord_t& areaMax,
-        */
+    inline typename shape::Shape< Grid >::bm_t draw(
+        const typelib::coord_t& areaMin = typelib::coord_t::ZERO(),
+        const typelib::coord_t& areaMax = typelib::coord_t::ZERO()
     ) const {
-        const auto bm = ( *functor )();
+        const auto bm = ( *functor )( areaMin, areaMax );
 
         // @test
         std::cout << "Points in " << typeid( *functor ).name() << " is " << bm.count() << std::endl;

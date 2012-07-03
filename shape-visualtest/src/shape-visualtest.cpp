@@ -3,6 +3,8 @@
 #include <Shaper.h>
 #include <Ellipsoid.h>
 #include <ElevationMap.h>
+#include <InverseFilterMapContent.h>
+#include <NeightbourFilterMapContent.h>
 #include <OutlineFilterMapContent.h>
 #include <VTKVisual.h>
 #include <SurfaceVTKVisual.h>
@@ -53,6 +55,8 @@ int main( int argc, char** argv ) {
 #ifdef ELEVATION_MAP_SHAPE_SIU_VISUALTEST
 {
     const size_t GRID = 81;
+    typedef BitMap< GRID >  bm_t;
+
     const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
     // картинка прот€жЄнностью 400 пкс или ~200 км согласно Google Earth
@@ -63,18 +67,45 @@ int main( int argc, char** argv ) {
     const auto hMax = 20.0;
     ElevationMap< GRID >  elm( source, scaleXY, hMin, hMax, true );
     const Shaper< GRID >  shaper( &elm );
-    auto bm = shaper.draw();
+    bm_t bm = shaper.draw();
 
+
+#if 0
     // ќставл€ем только внешний контур
-    OutlineFilterMapContent fmc;
-    fmc( bm );
+    typelib::OutlineFilterMapContent< true >  outline;
+    outline( bm );
+#endif
+
+
+#if 0
+    // ќставл€ем тех, р€дом с которыми заданное кол-во соседей
+    typelib::NeightbourFilterMapContent< 1, 5, true >  neighbour;
+    neighbour( bm );
+#endif
+
+
+#if 0
+    // »нвертируем
+    typelib::InverseFilterMapContent  inverse;
+    inverse( bm );
+#endif
+
+
+#if 1
+    // Ёмулируем OutlineFilterMapContent без граничных стенок
+    bm_t bmNeighbour( bm );
+    typelib::NeightbourFilterMapContent< 26, 26, true >  neighbour;
+    neighbour( bmNeighbour );
+    bm ^= bmNeighbour;
+#endif
+
 
 
     // ¬изуализируем холст средствами VTK > http://vtk.org
 #ifdef SURFACE_VISUAL_SIU_VISUALTEST
-    siu::io::SurfaceVTKVisual< 700, 1, true, true >  visual;
+    io::SurfaceVTKVisual< 700, 1, true, true >  visual;
 #else
-    siu::io::VTKVisual< 700, 1, true, true >  visual;
+    io::VTKVisual< 700, 1, true, true >  visual;
 #endif
     visual << bm;
     visual.wait();

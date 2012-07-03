@@ -26,6 +26,8 @@
 #include <vtkProperty.h>
 
 
+// @todo extend Создать контурный визуализатор > http://www.bu.edu/tech/research/training/tutorials/vtk/#CONTOUR
+
 
 namespace siu {
     namespace io {
@@ -98,6 +100,8 @@ public:
     template< size_t Grid >
     inline VTKVisual& operator<<( const common::BitMap< Grid >&  bm ) {
 
+        typedef common::BitMap< Grid >  bm_t;
+
         // Переводим полученный холст в формат VTK
         // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
 
@@ -108,9 +112,9 @@ public:
         auto points = vtkSmartPointer< vtkPoints >::New();
         auto vertices = vtkSmartPointer< vtkCellArray >::New();
 
-        size_t i = bm.raw.get_first();
+        size_t i = bm.first();
         do {
-            const typelib::coordInt_t c = bm.ci( i );
+            const typelib::coordInt_t c = bm_t::ci( i );
             const float cf[3] = {
                 static_cast< float >( c.x ) + shiftCenter,
                 static_cast< float >( c.y ) + shiftCenter,
@@ -121,7 +125,22 @@ public:
             pid[ 0 ] = points->InsertNextPoint( cf );
             vertices->InsertNextCell( 1, pid );
 
-            i = bm.raw.get_next( i );
+            i = bm.next( i );
+
+#ifdef _DEBUG
+            if (i >= bm_t::volume()) {
+                // координата за пределами карты, такого быть не должно
+                // смотрим, сколько ещё координат оказались вне
+                // заданных картой границ
+                size_t n = 0;
+                do {
+                    ++n;
+                } while (i != 0);
+                assert( (n == 0) && "Обнаружены данные за пределами карты." );
+                break;
+            }
+#endif
+
         } while (i != 0);
 
 

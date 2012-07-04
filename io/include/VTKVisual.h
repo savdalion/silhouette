@@ -19,6 +19,9 @@
 #include <vtkCubeSource.h>
 #include <vtkRegularPolygonSource.h>
 #include <vtkCubeAxesActor.h>
+#include <vtkLookupTable.h>
+#include <vtkFloatArray.h>
+#include <vtkPointData.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>
@@ -40,6 +43,10 @@ namespace siu {
 * @template sizePointT Размер точки, пкс.
 * @template showCornerT Отмечать углы визуализируемого элемента.
 * @template showAxesT Показывать оси декартовых координат.
+* @template rgb Первые 4 байта задают цвет по умолчанию для визуализируемых
+*           данных. Если 0, данные раскрашиваются в цвета диапазона
+*           [ синий (минимум); красный (максимум) ].
+*           Пример для красного цвета: 0xFF0000
 *
 * @source http://vtk.org
 */
@@ -47,7 +54,8 @@ template<
     size_t sizeWindowT,
     size_t sizePointT = 1,
     bool showCornerT = true,
-    bool showAxesT = true
+    bool showAxesT = true,
+    unsigned int rgba = 0
 >
 class VTKVisual {
 public:
@@ -105,13 +113,26 @@ public:
         // Переводим полученный холст в формат VTK
         // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
 
-        // для центрирования и отметок границ секти
+        // для центрирования и отметок границ сетки
         const float halfN = static_cast< float >( Grid - 1 ) / 2.0f;
         const float shiftCenter = 0.0f;
-            
+
         auto points = vtkSmartPointer< vtkPoints >::New();
         auto vertices = vtkSmartPointer< vtkCellArray >::New();
 
+
+        // собираем облако
+
+        // значения для раскраски цветом
+        // @source http://vtk.1045678.n5.nabble.com/How-to-use-vtkRibbonFilter-to-show-a-scalar-field-td1237601.html
+        auto data = vtkSmartPointer< vtkFloatArray >::New();
+        data->Initialize();
+        data->SetName( "ElevationData" );
+        data->SetNumberOfComponents( 1 );
+        data->SetNumberOfValues( bm.count() ); 
+
+        // точки
+        size_t n = 0;
         size_t i = bm.first();
         do {
             const typelib::coordInt_t c = bm_t::ci( i );
@@ -124,8 +145,10 @@ public:
             // @todo optimize Использовать более быстрое заполнение точками и вершинами.
             pid[ 0 ] = points->InsertNextPoint( cf );
             vertices->InsertNextCell( 1, pid );
+            data->SetValue( n, static_cast< float >( c.z ) );
 
             i = bm.next( i );
+            ++n;
 
 #ifdef _DEBUG
             if (i >= bm_t::volume()) {
@@ -144,23 +167,81 @@ public:
         } while (i != 0);
 
 
+        // всё вместе
         auto point = vtkSmartPointer< vtkPolyData >::New(); 
         point->SetPoints( points );
         point->SetVerts( vertices );
- 
+
+
         auto mapper = vtkSmartPointer< vtkPolyDataMapper >::New();
 #if VTK_MAJOR_VERSION <= 5
         mapper->SetInput( point );
 #else
         mapper->SetInputData( point );
 #endif
+
+        // цвет точек
+
+        // задан конкретный цвет
+        const float r = static_cast< float >( (rgba >> 24) & 0x000000ff ) / 255.0f;
+        const float g = static_cast< float >( (rgba >> 16) & 0x000000ff ) / 255.0f;
+        const float b = static_cast< float >( (rgba >> 8)  & 0x000000ff ) / 255.0f;
+        const float a = static_cast< float >( (rgba)       & 0x000000ff ) / 255.0f;
+        const bool gradientColor = ((r == g) && (g == b) && (b == a) && (a == 0) );
+
+        if ( gradientColor ) {
+            // @source http://vtk.org/Wiki/VTK/Examples/Cxx/Utilities/ColorLookupTable
+            point->GetPointData()->AddArray( data );
+
+            auto lookupTable = vtkSmartPointer< vtkLookupTable >::New();
+            const auto edgeZ = bm.edgeZ();
+
+            lookupTable->SetTableRange( edgeZ.first, edgeZ.second );
+            lookupTable->SetHueRange( 0.667, 0.0 );
+
+            /* @example Чёрно-белая картинка
+            // @source http://wenku.baidu.com/view/c95242f69e31433239689326.html page 44
+            lookupTable->SetHueRange( 0, 0 );
+            lookupTable->SetSaturationRange( 0, 0 );
+            lookupTable->SetValueRange( edgeZ.first, edgeZ.second );
+            */
+
+            // @example Красно-зелёно-синяя картинка
+            // @source http://wenku.baidu.com/view/c95242f69e31433239689326.html page 44
+            //lookupTable->SetHueRange( 0.0, 0.667 );
+
+            // @test
+            //lookupTable->SetTableRange( -100, 100 );
+            //lookupTable->SetHueRange( 160.0 / 240.0, 0.0 );
+            //lookupTable->SetSaturationRange( 1, 1 );
+            //lookupTable->SetValueRange( -50, 50 );
+
+            lookupTable->Build();
+
+            mapper->SetLookupTable( lookupTable );
+            mapper->SetScalarRange( edgeZ.first, edgeZ.second );
+            mapper->ScalarVisibilityOn();
+            mapper->SelectColorArray( "ElevationData" );
+            mapper->SetScalarModeToUsePointFieldData();
+            mapper->SetColorModeToMapScalars();
+
+        } else {
+            // цвет для всей картинки поставим Actoro'ом ниже
+        }
+
  
         auto contentActor = vtkSmartPointer< vtkActor >::New();
         contentActor->SetMapper( mapper );
         contentActor->GetProperty()->SetPointSize( sizePointT );
+        if ( !gradientColor ) {
+            contentActor->GetProperty()->SetColor( r, g, b );
+        }
+
         renderer->AddActor( contentActor );
 
 
+#if 0
+// Отключаем, если координатные оси не нужны
         // Отмечаем границы холста
         auto cornerPoints = vtkSmartPointer< vtkPoints >::New();
         if ( showCornerT ) {
@@ -236,10 +317,16 @@ public:
             hasAxes = true;
 
         } // if ( showAxesT )
+#endif
 
 
         // Обновляем что нарисовали
+        renderer->GetActiveCamera()->ParallelProjectionOn();
+        renderer->GetActiveCamera()->SetFocalPoint( 0, 0, 0 );
+        //renderer->GetActiveCamera()->SetPosition( 0, -1, 0 );
+        //renderer->GetActiveCamera()->SetViewUp( 0, 0, 1 ); 
         renderer->ResetCamera();
+
         renderWindow->Render();
 
         return *this;

@@ -71,6 +71,12 @@ int main( int argc, char** argv ) {
 
 
 #if 0
+    // Показываем всё
+    // (не требует доп. кода)
+#endif
+
+
+#if 1
     // Оставляем только внешний контур
     typelib::OutlineFilterMapContent< true >  outline;
     outline( bm );
@@ -91,7 +97,7 @@ int main( int argc, char** argv ) {
 #endif
 
 
-#if 1
+#if 0
     // Эмулируем OutlineFilterMapContent без граничных стенок
     bm_t bmNeighbour( bm );
     typelib::NeightbourFilterMapContent< 26, 26, true >  neighbour;
@@ -105,7 +111,7 @@ int main( int argc, char** argv ) {
 #ifdef SURFACE_VISUAL_SIU_VISUALTEST
     io::SurfaceVTKVisual< 700, 1, true, true >  visual;
 #else
-    io::VTKVisual< 700, 1, true, true >  visual;
+    io::VTKVisual< 700, 2, true, true, 0x00000000 >  visual;
 #endif
     visual << bm;
     visual.wait();

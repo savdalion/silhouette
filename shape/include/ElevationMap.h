@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Shape.h"
-#include <boost/math/special_functions/round.hpp>
+
 
 /* - Заменено на GraphicsMagick
 #define PNG_DEBUG 3
@@ -492,10 +492,10 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     // Получаем коэффициенты для нормализации высот
     // Для правильных коэффициентов нужно просмотреть *всю карту*
     int vHMin = INT_MAX;
-    int vHMax = 0;
+    int vHMax = INT_MIN;
     for (size_t j = 0; j < image.size().height(); ++j) {
         for (size_t i = 0; i < image.size().width(); ++i) {
-            // высота представлена чёрно-белой градацией: RGB всегда равны
+            // высота представлена чёрно-белой градацией: R == G == B
             const auto color = image.pixelColor( i, j );
             /* - Палитра скорректирована выше.
             assert( ( (color.redQuantum() == color.greenQuantum())
@@ -505,11 +505,9 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
             const int v = static_cast< int >( color.redQuantum() );
             if (v < vHMin) {
                 vHMin = v;
-                continue;
             }
             if (v > vHMax) {
                 vHMax = v;
-                continue;
             }
 
         } // for (int i
@@ -519,7 +517,11 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     //const int vHCenter = (vHMax - vHMin) / 2;
     // равнина
     const bool flat = (vHMax == vHMin);
-    const int vHMedian = (vHMax - vHMin) / 2;
+    const int vH = vHMax - vHMin;
+    const int vHMedian = vH / 2;
+
+    // Масштаб картинки по высоте, пкс / км
+    const float scaleZ = vH / (hMax - hMin);
 
     const int G = static_cast< int >( Grid );
     const float inOneG = sizeGrid();
@@ -527,7 +529,17 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     assert( ((maxCoordCube * 2 + 1) == Grid)
         && "Сетка не согласована с координантами." );
     const float hMedian = (hMax - hMin) / 2.0f;  // == hReal / 2.0
-    const float scale = 1.0f / sizeMax();
+
+    //const float scale = 1.0f / sizeMax();
+
+    // Коэффициент для корректировки высоты согласно масштабу
+    const float kZ = scaleXY / scaleZ;
+
+    // Где, с учётом масштаба и высоты, у нас будет "пол" карты высот
+    const int floorZ = -static_cast< int >(
+        static_cast< float >( maxCoordCube ) * kZ
+    );
+
 
     // Собираем поверхность: пробегаем по сетке XY
     for (int y = -maxCoordCube; y <= maxCoordCube; ++y) {
@@ -541,12 +553,15 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
             const auto color = image.pixelColor( px, py );
             const int h = static_cast< int >( color.redQuantum() );
             // Реальная высота в мире
-            //const float realH = hMax * static_cast< float >( h ) / vHMax;
+            const float realH = static_cast< float >( h ) * scaleZ;
 
-            //const int z = static_cast< int >( boost::math::round(
-            const int z = static_cast< int >( std::floor(
-                static_cast< float >( G * h )  / static_cast< float >(vHMax + 1) / 2.0f
-            ) ) - maxCoordCube;
+            const float tz = (
+                static_cast< float >( h ) / static_cast< float >( vHMax + 1 )
+              * static_cast< float >( G )
+              - static_cast< float >( maxCoordCube )
+                // высоту надо скорректировать по масштабу картинки
+            ) * kZ;
+            const int z = static_cast< int >( tz );
 
             // Формируем бит-карту
 #ifdef _DEBUG
@@ -560,7 +575,7 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
             // По требованию заполняем "низ"
             if ( fill ) {
-                for (int q = -maxCoordCube; q < z; ++q) {
+                for (int q = z; q > floorZ; --q) {
                     bm.set( x, y, q );
                 }
             }

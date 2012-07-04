@@ -46,7 +46,7 @@ namespace siu {
 * @template rgb Первые 4 байта задают цвет по умолчанию для визуализируемых
 *           данных. Если 0, данные раскрашиваются в цвета диапазона
 *           [ синий (минимум); красный (максимум) ].
-*           Пример для красного цвета: 0xFF0000
+*           Пример для красного цвета: 0xFF0000FF
 *
 * @source http://vtk.org
 */
@@ -195,6 +195,11 @@ public:
 
             auto lookupTable = vtkSmartPointer< vtkLookupTable >::New();
             const auto edgeZ = bm.edgeZ();
+#ifdef _DEBUG
+            std::cout << "Крайние значения высоты, ячейки: [ "
+                << edgeZ.first << "; " << edgeZ.second << " ]"
+            << std::endl;
+#endif
 
             lookupTable->SetTableRange( edgeZ.first, edgeZ.second );
             lookupTable->SetHueRange( 0.667, 0.0 );
@@ -240,7 +245,7 @@ public:
         renderer->AddActor( contentActor );
 
 
-#if 0
+#if 1
 // Отключаем, если координатные оси не нужны
         // Отмечаем границы холста
         auto cornerPoints = vtkSmartPointer< vtkPoints >::New();

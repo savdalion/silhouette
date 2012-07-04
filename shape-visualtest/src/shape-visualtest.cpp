@@ -59,12 +59,16 @@ int main( int argc, char** argv ) {
 
     const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
-    // картинка протяжённостью 400 пкс или ~200 км согласно Google Earth
+    //const std::string source = PATH_MEDIA + "test/a/gray-min-max.png";
+    // картинка "mars/b/gray-elevation.png" протяжённостью 400 пкс или ~200 км
+    // (согласно масштабам Google Earth)
     // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7
-    const auto scaleXY = 200.0 / 400.0;
-    // @todo Не отрабатывает правильно масштаб. Исправить.
-    const auto hMin = -10.0;
-    const auto hMax = 20.0;
+    const double scaleXY = 200.0 / 400.0;
+    // т.к. высота много меньше размера поверхности, вводим "коэффициент для
+    // наглядности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
+    const double clearness = 5;
+    const double hMin = -10.0 * clearness;
+    const double hMax = 20.0 * clearness;
     ElevationMap< GRID >  elm( source, scaleXY, hMin, hMax, true );
     const Shaper< GRID >  shaper( &elm );
     bm_t bm = shaper.draw();
@@ -85,7 +89,7 @@ int main( int argc, char** argv ) {
 
 #if 0
     // Оставляем тех, рядом с которыми заданное кол-во соседей
-    typelib::NeightbourFilterMapContent< 1, 5, true >  neighbour;
+    typelib::NeightbourFilterMapContent< 1, 10, true >  neighbour;
     neighbour( bm );
 #endif
 
@@ -112,6 +116,7 @@ int main( int argc, char** argv ) {
     io::SurfaceVTKVisual< 700, 1, true, true >  visual;
 #else
     io::VTKVisual< 700, 2, true, true, 0x00000000 >  visual;
+    //io::VTKVisual< 700, 2, true, true, 0xFFFFFFFF >  visual;
 #endif
     visual << bm;
     visual.wait();

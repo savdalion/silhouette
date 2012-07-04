@@ -16,7 +16,9 @@ class BitMap :
 {
 public:
     inline BitMap() {
+        /* - Лишнее: typelib::BitMapContent3D сразу создаётся пустой.
         set( false );
+        */
     }
 
 

@@ -517,18 +517,19 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     //const int vHCenter = (vHMax - vHMin) / 2;
     // равнина
     const bool flat = (vHMax == vHMin);
-    const int vH = vHMax - vHMin;
-    const int vHMedian = vH / 2;
+    const int vH = (flat ? 255 : (vHMax - vHMin)) + 1;
+    //const int vHMedian = vH / 2;
 
     // Масштаб картинки по высоте, пкс / км
-    const float scaleZ = vH / (hMax - hMin);
+    const float scaleZ =
+        static_cast< float >( vH ) / static_cast< float >(hMax - hMin);
 
     const int G = static_cast< int >( Grid );
     const float inOneG = sizeGrid();
     const int maxCoordCube = static_cast< int >( bm.maxCoord().x );
     assert( ((maxCoordCube * 2 + 1) == Grid)
         && "Сетка не согласована с координантами." );
-    const float hMedian = (hMax - hMin) / 2.0f;  // == hReal / 2.0
+    //const float hMedian = (hMax - hMin) / 2.0f;  // == hReal / 2.0
 
     //const float scale = 1.0f / sizeMax();
 
@@ -551,14 +552,15 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
             // Получаем значение высоты в этой ячейке;
             // высота представлена чёрно-белой градацией: RGB всегда равны
             const auto color = image.pixelColor( px, py );
-            const int h = static_cast< int >( color.redQuantum() );
+            const int h = static_cast< int >( color.redQuantum() ) + 1;
             // Реальная высота в мире
             const float realH = static_cast< float >( h ) * scaleZ;
 
             const float tz = (
                 static_cast< float >( h ) / static_cast< float >( vHMax + 1 )
-              * static_cast< float >( G )
-              - static_cast< float >( maxCoordCube )
+                * static_cast< float >( G )
+                - static_cast< float >( maxCoordCube )
+                - 1
                 // высоту надо скорректировать по масштабу картинки
             ) * kZ;
             const int z = static_cast< int >( tz );

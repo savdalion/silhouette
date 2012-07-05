@@ -57,15 +57,20 @@ int main( int argc, char** argv ) {
     const size_t GRID = 81;
     typedef BitMap< GRID >  bm_t;
 
-    const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-center-circle.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-min.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-middle.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min-max.png";
+
+    const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
     // картинка "mars/b/gray-elevation.png" протяжённостью 400 пкс или ~200 км
     // (согласно масштабам Google Earth)
     // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7
     const double scaleXY = 200.0 / 400.0;
     // т.к. высота много меньше размера поверхности, вводим "коэффициент для
     // наглядности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
+    // @todo Отрабатывать момент, когда размер по Z превышает размеры XY.
     const double clearness = 5;
     const double hMin = -10.0 * clearness;
     const double hMax = 20.0 * clearness;

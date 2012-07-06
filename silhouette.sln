@@ -1,22 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shape", "shape\shape.vcxproj", "{729A31C7-67A3-42FF-AEEA-78FD27953B44}"
-	ProjectSection(ProjectDependencies) = postProject
-		{584C9643-4035-44CA-BE52-337B63E02DD8} = {584C9643-4035-44CA-BE52-337B63E02DD8}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shape-visualtest", "shape-visualtest\shape-visualtest.vcxproj", "{989BAA89-06BD-4F5E-A667-3EF6D2DAED29}"
 	ProjectSection(ProjectDependencies) = postProject
 		{584C9643-4035-44CA-BE52-337B63E02DD8} = {584C9643-4035-44CA-BE52-337B63E02DD8}
-		{729A31C7-67A3-42FF-AEEA-78FD27953B44} = {729A31C7-67A3-42FF-AEEA-78FD27953B44}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "common\common.vcxproj", "{584C9643-4035-44CA-BE52-337B63E02DD8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "typelib", "..\typelib\typelib.vcxproj", "{41DEF228-0340-4356-99FE-FC473A36B1DE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "io", "io\io.vcxproj", "{DF7A584E-4DE4-433A-8D39-95610F203E2D}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "typelib", "..\typelib\typelib.vcxproj", "{3421E387-6F9F-4E23-91FC-50DF404B12FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "silhouette", "silhouette\silhouette.vcxproj", "{584C9643-4035-44CA-BE52-337B63E02DD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,26 +16,18 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{729A31C7-67A3-42FF-AEEA-78FD27953B44}.Debug|Win32.ActiveCfg = Debug|Win32
-		{729A31C7-67A3-42FF-AEEA-78FD27953B44}.Debug|Win32.Build.0 = Debug|Win32
-		{729A31C7-67A3-42FF-AEEA-78FD27953B44}.Release|Win32.ActiveCfg = Release|Win32
-		{729A31C7-67A3-42FF-AEEA-78FD27953B44}.Release|Win32.Build.0 = Release|Win32
 		{989BAA89-06BD-4F5E-A667-3EF6D2DAED29}.Debug|Win32.ActiveCfg = Debug|Win32
 		{989BAA89-06BD-4F5E-A667-3EF6D2DAED29}.Debug|Win32.Build.0 = Debug|Win32
 		{989BAA89-06BD-4F5E-A667-3EF6D2DAED29}.Release|Win32.ActiveCfg = Release|Win32
 		{989BAA89-06BD-4F5E-A667-3EF6D2DAED29}.Release|Win32.Build.0 = Release|Win32
+		{41DEF228-0340-4356-99FE-FC473A36B1DE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{41DEF228-0340-4356-99FE-FC473A36B1DE}.Debug|Win32.Build.0 = Debug|Win32
+		{41DEF228-0340-4356-99FE-FC473A36B1DE}.Release|Win32.ActiveCfg = Release|Win32
+		{41DEF228-0340-4356-99FE-FC473A36B1DE}.Release|Win32.Build.0 = Release|Win32
 		{584C9643-4035-44CA-BE52-337B63E02DD8}.Debug|Win32.ActiveCfg = Debug|Win32
 		{584C9643-4035-44CA-BE52-337B63E02DD8}.Debug|Win32.Build.0 = Debug|Win32
 		{584C9643-4035-44CA-BE52-337B63E02DD8}.Release|Win32.ActiveCfg = Release|Win32
 		{584C9643-4035-44CA-BE52-337B63E02DD8}.Release|Win32.Build.0 = Release|Win32
-		{DF7A584E-4DE4-433A-8D39-95610F203E2D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{DF7A584E-4DE4-433A-8D39-95610F203E2D}.Debug|Win32.Build.0 = Debug|Win32
-		{DF7A584E-4DE4-433A-8D39-95610F203E2D}.Release|Win32.ActiveCfg = Release|Win32
-		{DF7A584E-4DE4-433A-8D39-95610F203E2D}.Release|Win32.Build.0 = Release|Win32
-		{3421E387-6F9F-4E23-91FC-50DF404B12FA}.Debug|Win32.ActiveCfg = Debug|Win32
-		{3421E387-6F9F-4E23-91FC-50DF404B12FA}.Debug|Win32.Build.0 = Debug|Win32
-		{3421E387-6F9F-4E23-91FC-50DF404B12FA}.Release|Win32.ActiveCfg = Release|Win32
-		{3421E387-6F9F-4E23-91FC-50DF404B12FA}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

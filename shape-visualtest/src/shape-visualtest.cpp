@@ -1,13 +1,13 @@
 #include "../include/StdAfx.h"
 #include "../include/configure.h"
 #include <Shaper.h>
-#include <Ellipsoid.h>
-#include <ElevationMap.h>
+#include <shape/Ellipsoid.h>
+#include <shape/ElevationMap.h>
 #include <InverseFilterMapContent.h>
 #include <NeightbourFilterMapContent.h>
 #include <OutlineFilterMapContent.h>
-#include <VTKVisual.h>
-#include <SurfaceVTKVisual.h>
+#include <io/VTKVisual.h>
+#include <io/SurfaceVTKVisual.h>
 
 
 /**
@@ -21,7 +21,6 @@ int main( int argc, char** argv ) {
 
 
     using namespace siu;
-    using namespace siu::common;
     using namespace siu::shape;
 
 
@@ -57,13 +56,14 @@ int main( int argc, char** argv ) {
     const size_t GRID = 81;
     typedef BitMap< GRID >  bm_t;
 
-    //const std::string source = PATH_MEDIA + "test/a/gray-center-circle.png";
+    const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-middle.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min-max.png";
 
-    const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
+    //const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
     // картинка "mars/b/gray-elevation.png" протяжённостью 400 пкс или ~200 км
     // (согласно масштабам Google Earth)
     // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7

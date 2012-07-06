@@ -4,7 +4,6 @@
 
 
 namespace siu {
-    namespace common {
 
 
 /**
@@ -28,6 +27,5 @@ public:
 };
 
 
-    } // common
 
 } // siu

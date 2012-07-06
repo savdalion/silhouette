@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coord-type.h>
-#include <BitMap.h>
+#include "../BitMap.h"
 
 
 
@@ -17,7 +17,7 @@ namespace siu {
 template< size_t Grid >
 class Shape {
 public:
-    typedef common::BitMap< Grid >  bm_t;
+    typedef BitMap< Grid >  bm_t;
 
 
 public:

@@ -1,51 +1,29 @@
-#pragma once
-
-#include "Shape.h"
-
-
 namespace siu {
     namespace shape {
 
-/**
-* Эллипосид.
-*
-* @template См. Shape
-*/
+
 template< size_t Grid >
-class Ellipsoid : public Shape< Grid > {
-public:
-    /**
-    * Размеры.
-    */
-    const float rx;
-    const float ry;
-    const float rz;
-
-    /**
-    * Будет ли элипсоид заполнен внутри.
-    */
-    const bool fill;
-
-
-
-public:
-    template< typename IT >
-    inline Ellipsoid(
-        IT rx, IT ry, IT rz,
-        bool fill
-    ) :
-        rx( static_cast< float >( rx ) ),
-        ry( static_cast< float >( ry ) ),
-        rz( static_cast< float >( rz ) ),
-        fill( fill )
-    {
-        assert( ( (rx > 0.0f) && (ry > 0.0f) && (rz > 0.0f) )
-            && "Все три радиуса должны быть больше 0." );
-    }
+template< typename IT >
+inline Ellipsoid< Grid >::Ellipsoid(
+    IT rx, IT ry, IT rz,
+    bool fill
+) :
+    rx( static_cast< float >( rx ) ),
+    ry( static_cast< float >( ry ) ),
+    rz( static_cast< float >( rz ) ),
+    fill( fill )
+{
+    assert( ( (rx > 0.0f) && (ry > 0.0f) && (rz > 0.0f) )
+        && "Все три радиуса должны быть больше 0." );
+}
 
 
-    virtual inline ~Ellipsoid() {
-    }
+
+
+template< size_t Grid >
+inline Ellipsoid< Grid >::~Ellipsoid() {
+}
+
 
 
 
@@ -105,6 +83,7 @@ public:
     }
 
 #endif
+
 
 
 
@@ -191,83 +170,79 @@ public:
 
 
 
-    /**
-    * @virtual Shape
-    *
-    * Эллипсоид строится прохождением по *всем* ячейкам сетки G.
+
+template< size_t Grid >
+inline typename Ellipsoid< Grid >::bm_t Ellipsoid< Grid >::operator()(
+    const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
+    const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
+) {
+    /* нормализованный размер
+    const float normalRX = rx / rMax;
+    const float normalRY = ry / rMax;
+    const float normalRZ = rz / rMax;
     */
-    virtual inline bm_t operator()(
-        const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
-        const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
-    ) {
-        /* нормализованный размер
-        const float normalRX = rx / rMax;
-        const float normalRY = ry / rMax;
-        const float normalRZ = rz / rMax;
-        */
 
-        // граничные координаты сетки
-        // (0, 0, 0) - центр
-        const int maxGCoord = (static_cast< int >( Grid ) - 1) / 2;
-        const int minGCoord = -maxGCoord;
+    // граничные координаты сетки
+    // (0, 0, 0) - центр
+    const int maxGCoord = (static_cast< int >( Grid ) - 1) / 2;
+    const int minGCoord = -maxGCoord;
 
-        // масштаб будет изменён, если указана не пустая область
-        if ( !empty(areaMin - areaMax) ) {
-            // (!) Коряво получается, когда в сетку требуется получить лишь часть фигуры.
-            assert( false && "@todo Не реализовано." );
-        }
+    // масштаб будет изменён, если указана не пустая область
+    if ( (areaMin - areaMax) != typelib::coord_t::ZERO() ) {
+        // (!) Коряво получается, когда в сетку требуется получить лишь часть фигуры.
+        assert( false && "@todo Не реализовано." );
+    }
 
-        // смещение относительно центра
-        const typelib::coordInt_t shift( 0, 0, 0 );
+    // смещение относительно центра
+    const typelib::coordInt_t shift( 0, 0, 0 );
 
-        // Работаем с родительской структурой 'bm'
+    // Работаем с родительской структурой 'bm'
 
-        const float sizeG = sizeGrid();
-        const float rx2 = rx * rx / (sizeG * sizeG);
-        const float ry2 = ry * ry / (sizeG * sizeG);
-        const float rz2 = rz * rz / (sizeG * sizeG);
-        for (int z = minGCoord; z <= maxGCoord; ++z) {
-            const float tz = static_cast< float >( z * z ) / rz2;
-            for (int y = minGCoord; y <= maxGCoord; ++y) {
-                const float ty = static_cast< float >( y * y ) / ry2;
-                for (int x = minGCoord; x <= maxGCoord; ++x) {
-                    /* - @todo Контролировать области. См. @todo выше.
-                    if ( outside( x, y, z, areaMin, areaMax ) ) {
-                        continue;
-                    }
-                    */
-                    const float tx = static_cast< float >( x * x ) / rx2;
-                    const float t = tx + ty + tz;
-                    if ( fill ) {
-                        // заполнен целиком
-                        if (t < 1.001f) {
-                            bm.set( x, y, z );
-                        }
-                    } else {
-                        // только поверхность
-                        if ( (t < 1.001f) && (t > 0.999f) ) {
-                            bm.set( x, y,  z );
-                        }
-                    }
-
+    const float sizeG = sizeGrid();
+    const float rx2 = rx * rx / (sizeG * sizeG);
+    const float ry2 = ry * ry / (sizeG * sizeG);
+    const float rz2 = rz * rz / (sizeG * sizeG);
+    for (int z = minGCoord; z <= maxGCoord; ++z) {
+        const float tz = static_cast< float >( z * z ) / rz2;
+        for (int y = minGCoord; y <= maxGCoord; ++y) {
+            const float ty = static_cast< float >( y * y ) / ry2;
+            for (int x = minGCoord; x <= maxGCoord; ++x) {
+                /* - @todo Контролировать области. См. @todo выше.
+                if ( outside( x, y, z, areaMin, areaMax ) ) {
+                    continue;
                 }
+                */
+                const float tx = static_cast< float >( x * x ) / rx2;
+                const float t = tx + ty + tz;
+                if ( fill ) {
+                    // заполнен целиком
+                    if (t < 1.001f) {
+                        bm.set( x, y, z );
+                    }
+                } else {
+                    // только поверхность
+                    if ( (t < 1.001f) && (t > 0.999f) ) {
+                        bm.set( x, y,  z );
+                    }
+                }
+
             }
         }
-
-        return bm;
     }
 
+    return bm;
+}
 
 
 
 
-    virtual inline float sizeMax() const {
-        const float rMax = std::max( std::max( rx, ry ), rz );
-        return 2.0f * rMax;
-    }
 
+template< size_t Grid >
+inline float Ellipsoid< Grid >::sizeMax() const {
+    const float rMax = std::max( std::max( rx, ry ), rz );
+    return 2.0f * rMax;
+}
 
-};
 
 
     } // shape

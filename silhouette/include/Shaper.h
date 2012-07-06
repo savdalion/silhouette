@@ -1,12 +1,11 @@
 #pragma once
 
+#include "shape/Shape.h"
 #include "BitMap.h"
 #include <coord-type.h>
-#include <Shape.h>
 
 
 namespace siu {
-    namespace common {
 
 
 /**
@@ -48,6 +47,5 @@ private:
 };
 
 
-    } // common
 
 } // siu

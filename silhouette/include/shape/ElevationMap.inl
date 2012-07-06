@@ -1,147 +1,57 @@
-#pragma once
-
-#include "Shape.h"
-
-
-/* - Заменено на GraphicsMagick
-#define PNG_DEBUG 3
-#include <png.h>
-*/
-
-#include <Magick++.h>
-
-
 namespace siu {
     namespace shape {
 
-/**
-* Карта высот.
-*
-* (!) Все расстояния указываются в км.
-*
-* @template См. Shape
-*/
+
 template< size_t Grid >
-class ElevationMap : public Shape< Grid > {
-public:
-    /**
-    * Источник карты высот.
-    * Напрмиер, путь к файлу PNG.
-    */
-    const std::string source;
-
-    /**
-    * Масштаб плоской картинки, пкс / км.
-    */
-    const float scaleXY;
-
-    /**
-    * Мин. высота (макс. глубина) на карте, км.
-    */
-    const float hMin;
-
-    /**
-    * Макс. высота на карте, км.
-    */
-    const float hMax;
-
-    /**
-    * Высота карты, км.
-    */
-    const float hReal;
-
-    /**
-    * Будет ли карта заполняться внутри (дно - плоскость XY).
-    */
-    const bool fill;
+template< typename IT >
+inline ElevationMap< Grid >::ElevationMap(
+    const std::string& source,
+    IT scaleXY,
+    IT hMin, IT hMax,
+    bool fill
+) :
+    source( source ),
+    scaleXY( static_cast< float >( scaleXY ) ),
+    hMin( static_cast< float >( hMin ) ),
+    hMax( static_cast< float >( hMax ) ),
+    hReal( static_cast< float >( hMax - hMin ) ),
+    fill( fill ),
+    // размер изображения: необходимо для работы метода size()
+    sizeImage_( std::make_pair( 0, 0 ) )
+{
+    assert( !typelib::empty( scaleXY ) && "Масштаб не указан." );
+    assert( (scaleXY > 0.0f)
+        && "Масштаб должен быть положительным значением." );
+    assert( !source.empty()
+        && "Не указан источник для формирования карты высот." );
+    assert( (hMin <= hMax)
+        && "Минимальная высота не может превышать максимальную." );
+}
 
 
-public:
-    template< typename IT >
-    inline ElevationMap(
-        const std::string& source,
-        IT scaleXY,
-        IT hMin, IT hMax,
-        bool fill
-    ) :
-        source( source ),
-        scaleXY( static_cast< float >( scaleXY ) ),
-        hMin( static_cast< float >( hMin ) ),
-        hMax( static_cast< float >( hMax ) ),
-        hReal( static_cast< float >( hMax - hMin ) ),
-        fill( fill ),
-        // размер изображения: необходимо для работы метода size()
-        sizeImage_( std::make_pair( 0, 0 ) )
-    {
-        assert( !typelib::empty( scaleXY ) && "Масштаб не указан." );
-        assert( (scaleXY > 0.0f)
-            && "Масштаб должен быть положительным значением." );
-        assert( !source.empty()
-            && "Не указан источник для формирования карты высот." );
-        assert( (hMin <= hMax)
-            && "Минимальная высота не может превышать максимальную." );
+
+
+template< size_t Grid >
+inline ElevationMap< Grid >::~ElevationMap() {
+}
+
+
+
+
+
+
+template< size_t Grid >
+inline float ElevationMap< Grid >::sizeMax() const {
+    if (sizeImage_.first == 0) {
+        sizeImage( &sizeImage_, source );
+        assert( (sizeImage_.first != 0)
+            && "Изображение с картой высот не получено или не распознано." );
+        assert( (sizeImage_.first == sizeImage_.second)
+            && "Работать умеем только с равносторонней картой." );
     }
-
-
-
-    virtual inline ~ElevationMap() {
-    }
-
-
-
-
-
-    /**
-    * @virtual Shape
-    */
-    virtual bm_t operator()(
-        const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
-        const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
-    );
-
-
-
-
-    virtual inline float sizeMax() const {
-        if (sizeImage_.first == 0) {
-            sizeImage( &sizeImage_, source );
-            assert( (sizeImage_.first != 0)
-                && "Изображение с картой высот не получено или не распознано." );
-            assert( (sizeImage_.first == sizeImage_.second)
-                && "Работать умеем только с равносторонней картой." );
-        }
-        const float ti = std::max( sizeImage_.first, sizeImage_.second ) * scaleXY;
-        return std::max( hReal, ti );
-    }
-
-
-
-
-
-protected:
-    /**
-    * Ширина и высота изображения - в rSizeImage.
-    */
-    static void sizeImage(
-        std::pair< size_t, size_t >* rSizeImage,
-        const std::string& source
-    );
-
-
-
-
-private:
-    /**
-    * Кеш размера изображения.
-    */
-    mutable std::pair< size_t, size_t >  sizeImage_;
-
-};
-
-
-    } // shape
-
-} // siu
+    const float ti = std::max( sizeImage_.first, sizeImage_.second ) * scaleXY;
+    return std::max( hReal, ti );
+}
 
 
 
@@ -553,6 +463,11 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
             // высота представлена чёрно-белой градацией: RGB всегда равны
             const auto color = image.pixelColor( px, py );
             const int h = static_cast< int >( color.redQuantum() ) + 1;
+            if (h == 1) {
+                // 0значает "нет дна", пропасть
+                continue;
+            }
+
             // Реальная высота в мире
             const float realH = static_cast< float >( h ) * scaleZ;
 
@@ -679,3 +594,9 @@ void siu::shape::ElevationMap< Grid >::sizeImage(
 
     *rSizeImage = std::make_pair( a, b );
 }
+
+
+
+    } // shape
+
+} // siu

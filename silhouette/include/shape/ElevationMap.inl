@@ -370,7 +370,7 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     const typelib::coord_t& areaMax
 ) {
 
-    // Самый простой спопоб - привести изображение к размеру Grid: т.о.
+    // Самый простой способ - привести изображение к размеру Grid: т.о.
     // мы без лишних хлопот получим хорошо усреднённую карту высот
 
     // @use http://graphicsmagick.org/Magick++/Image.html
@@ -379,14 +379,16 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
     // Читаем изображение карты, приводим его к размеру Grid и
     // меняем палитру на чёрно-белую
-    Magick::Image image;
+
+    Wrapper wrapper;
+
     std::ostringstream ss;
     ss << Grid << "x" << Grid;
     try {
-        image.read( source.c_str() );
-        image.zoom( ss.str() );
-        if (image.colorSpace() != Magick::GRAYColorspace) {
-            image.colorSpace( Magick::GRAYColorspace );
+        wrapper.image.read( source.c_str() );
+        wrapper.image.zoom( ss.str() );
+        if (wrapper.image.colorSpace() != Magick::GRAYColorspace) {
+            wrapper.image.colorSpace( Magick::GRAYColorspace );
         }
 
     } catch( const Magick::Exception& ex ) {
@@ -403,16 +405,16 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     // Для правильных коэффициентов нужно просмотреть *всю карту*
     int vHMin = INT_MAX;
     int vHMax = INT_MIN;
-    for (size_t j = 0; j < image.size().height(); ++j) {
-        for (size_t i = 0; i < image.size().width(); ++i) {
+    for (size_t j = 0; j < wrapper.image.size().height(); ++j) {
+        for (size_t i = 0; i < wrapper.image.size().width(); ++i) {
             // высота представлена чёрно-белой градацией: R == G == B
-            const auto color = image.pixelColor( i, j );
+            wrapper.color = wrapper.image.pixelColor( i, j );
             /* - Палитра скорректирована выше.
             assert( ( (color.redQuantum() == color.greenQuantum())
                    && (color.redQuantum() == color.blueQuantum()) )
                 && "Изображение не в градациях серого: возможны искажения при формировании карты высот." );
             */
-            const int v = static_cast< int >( color.redQuantum() );
+            const int v = static_cast< int >( wrapper.color.redQuantum() );
             if (v < vHMin) {
                 vHMin = v;
             }
@@ -461,8 +463,8 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
             const int px = x + maxCoordCube;
             // Получаем значение высоты в этой ячейке;
             // высота представлена чёрно-белой градацией: RGB всегда равны
-            const auto color = image.pixelColor( px, py );
-            const int h = static_cast< int >( color.redQuantum() ) + 1;
+            wrapper.color = wrapper.image.pixelColor( px, py );
+            const int h = static_cast< int >( wrapper.color.redQuantum() ) + 1;
             if (h == 1) {
                 // 0значает "нет дна", пропасть
                 continue;
@@ -576,9 +578,10 @@ void siu::shape::ElevationMap< Grid >::sizeImage(
     Magick::InitializeMagick( nullptr );
 
     // Читаем изображение карты и приводим его к размеру Grid
-    Magick::Image image;
+    Wrapper wrapper;
+
     try {
-        image.read( source.c_str() );
+        wrapper.image.read( source.c_str() );
 
     } catch( const Magick::Exception& ex ) {
         const auto exWhat = ex.what();
@@ -588,7 +591,7 @@ void siu::shape::ElevationMap< Grid >::sizeImage(
         return;
     }
 
-    const auto geometry = image.size();
+    const auto geometry = wrapper.image.size();
     const size_t a = geometry.width();
     const size_t b = geometry.height();
 

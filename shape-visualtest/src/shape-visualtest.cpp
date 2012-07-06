@@ -56,8 +56,8 @@ int main( int argc, char** argv ) {
     const size_t GRID = 81;
     typedef BitMap< GRID >  bm_t;
 
-    const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
-    //const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
+    const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-middle.png";
@@ -117,13 +117,29 @@ int main( int argc, char** argv ) {
 
 
     // Визуализируем холст средствами VTK > http://vtk.org
+/* - Переписано через json-параметризацию. См. ниже.
 #ifdef SURFACE_VISUAL_SIU_VISUALTEST
     io::SurfaceVTKVisual< 700, 1, true, true >  visual;
+
 #else
     io::VTKVisual< 700, 2, true, true, 0x00000000 >  visual;
     //io::VTKVisual< 700, 2, true, true, 0xFFFFFFFF >  visual;
+
 #endif
+*/
+    io::VTKVisual::option_t o;
+    o[ "size-window" ] = 700;
+    o[ "size-point" ] = 3;
+    o[ "show-corner" ] = true;
+    o[ "show-axes" ] = true;
+    o[ "rgba" ] = 0x00000000;
+    //o[ "rgba" ] = 0xFFFFFFFF;
+
+
+    io::VTKVisual visual( o );
+
     visual << bm;
+
     visual.wait();
 }
 #endif

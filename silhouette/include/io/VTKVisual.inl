@@ -2,21 +2,18 @@ namespace siu {
     namespace io {
 
         
-template<
-    size_t sizeWindowT,
-    size_t sizePointT,
-    bool showCornerT,
-    bool showAxesT,
-    unsigned int rgba
->
-inline VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::VTKVisual(
+inline VTKVisual::VTKVisual(
+    const io::VTKVisual::option_t& json
 ) :
+    option( json ),
     renderer( vtkSmartPointer< vtkRenderer >::New() ),
     renderWindow( vtkSmartPointer< vtkRenderWindow >::New() ),
     hasAxes( false )
 {
     renderWindow->AddRenderer( renderer );
-    renderWindow->SetSize( sizeWindowT, sizeWindowT );
+
+    const size_t sizeWindow = option[ "size-window" ];
+    renderWindow->SetSize( sizeWindow, sizeWindow );
 
     // Настраиваем камеру
     auto camera = renderer->GetActiveCamera();
@@ -42,30 +39,15 @@ inline VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::VTKVi
 
 
 
-template<
-    size_t sizeWindowT,
-    size_t sizePointT,
-    bool showCornerT,
-    bool showAxesT,
-    unsigned int rgba
->
-inline VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::~VTKVisual() {
+inline VTKVisual::~VTKVisual() {
     // используются умные указатели, красота
 }
 
 
 
 
-template<
-    size_t sizeWindowT,
-    size_t sizePointT,
-    bool showCornerT,
-    bool showAxesT,
-    unsigned int rgba
->
 template< size_t Grid >
-inline typename VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >&
-VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::operator<<(
+inline VTKVisual& VTKVisual::operator<<(
     const BitMap< Grid >&  bm
 ) {
     if ( bm.empty() ) {
@@ -148,6 +130,7 @@ VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::operator<<(
     // цвет точек
 
     // задан конкретный цвет
+    const size_t rgba = option[ "rgba" ];
     const float r = static_cast< float >( (rgba >> 24) & 0x000000ff ) / 255.0f;
     const float g = static_cast< float >( (rgba >> 16) & 0x000000ff ) / 255.0f;
     const float b = static_cast< float >( (rgba >> 8)  & 0x000000ff ) / 255.0f;
@@ -196,13 +179,14 @@ VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::operator<<(
         mapper->SetColorModeToMapScalars();
 
     } else {
-        // цвет для всей картинки поставим Actoro'ом ниже
+        // цвет для всей картинки поставим Actor'ом ниже
     }
 
  
     auto contentActor = vtkSmartPointer< vtkActor >::New();
     contentActor->SetMapper( mapper );
-    contentActor->GetProperty()->SetPointSize( sizePointT );
+    const size_t sizePoint = option[ "size-point" ];
+    contentActor->GetProperty()->SetPointSize( sizePoint );
     if ( !gradientColor ) {
         contentActor->GetProperty()->SetColor( r, g, b );
     }
@@ -214,7 +198,8 @@ VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::operator<<(
 // Отключаем, если координатные оси не нужны
     // Отмечаем границы холста
     auto cornerPoints = vtkSmartPointer< vtkPoints >::New();
-    if ( showCornerT ) {
+    const bool showCorner = option[ "show-corner" ];
+    if ( showCorner ) {
         auto cornerVertices = vtkSmartPointer< vtkCellArray >::New();
         const size_t NP = 1 + 8;
         const float p[ NP ][ 3 ] = {
@@ -255,7 +240,8 @@ VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::operator<<(
 
 
     // Рисуем оси
-    if ( !hasAxes && showAxesT ) {
+    const bool showAxes = option[ "show-axes" ];
+    if ( !hasAxes && showAxes ) {
         // Оси рисуем после визуализации, т.к. процесс их отрисовки длится неск. секунд.
         /*
         {
@@ -306,14 +292,7 @@ VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::operator<<(
 
 
 
-template<
-    size_t sizeWindowT,
-    size_t sizePointT,
-    bool showCornerT,
-    bool showAxesT,
-    unsigned int rgba
->
-inline void VTKVisual< sizeWindowT, sizePointT, showCornerT, showAxesT, rgba >::wait() {
+inline void VTKVisual::wait() {
     auto renderWindowInteractor = vtkSmartPointer< vtkRenderWindowInteractor >::New();
     renderWindowInteractor->SetRenderWindow( renderWindow );
     renderer->ResetCamera();

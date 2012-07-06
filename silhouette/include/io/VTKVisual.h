@@ -2,6 +2,7 @@
 
 #include <BitMap.h>
 #include <other-type.h>
+#include <json-type.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>
@@ -50,19 +51,19 @@ namespace siu {
 *
 * @source http://vtk.org
 */
-template<
-    size_t sizeWindowT,
-    size_t sizePointT = 1,
-    bool showCornerT = true,
-    bool showAxesT = true,
-    unsigned int rgba = 0
->
 class VTKVisual {
+public:
+    /**
+    * Тип для задания опций визаулизатору.
+    */
+    typedef typelib::json::Variant  option_t;
+
+
 public:
     /**
     * Открывает окно для визуализации.
     */
-    VTKVisual();
+    VTKVisual( const io::VTKVisual::option_t& option );
 
 
 
@@ -90,6 +91,12 @@ public:
 
 
 private:
+    /**
+    * Опции визуализатора.
+    */
+    typelib::json::Variant option;
+
+
     vtkSmartPointer< vtkRenderer >  renderer;
     vtkSmartPointer< vtkRenderWindow >  renderWindow;
 

@@ -17,7 +17,7 @@ namespace siu {
 /**
 * Карта высот.
 *
-* (!) Все расстояния указываются в км.
+* (!) Расстояния указываются в км.
 *
 * @template См. Shape
 */
@@ -107,6 +107,16 @@ private:
     * Кеш размера изображения.
     */
     mutable std::pair< size_t, size_t >  sizeImage_;
+
+
+    /**
+    * Попытка @todo избавиться от Warning C4252, безуспешно.
+    * @source http://www.windows-api.com/microsoft/VC-Language/30952961/a-solution-to-warning-c4251--class-needs-to-have-dllinterface.aspx
+    */
+    struct Wrapper {
+        Magick::Image image;
+        Magick::Color color;
+    };
 
 };
 

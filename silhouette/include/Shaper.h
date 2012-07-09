@@ -2,7 +2,7 @@
 
 #include "shape/Shape.h"
 #include "BitMap.h"
-#include <coord-type.h>
+#include <coord.h>
 
 
 namespace siu {

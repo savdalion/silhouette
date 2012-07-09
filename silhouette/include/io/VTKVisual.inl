@@ -190,12 +190,11 @@ inline VTKVisual& VTKVisual::operator<<(
     if ( !gradientColor ) {
         contentActor->GetProperty()->SetColor( r, g, b );
     }
+    // @todo contentActor->GetProperty()->SetAlpha( a );
 
     renderer->AddActor( contentActor );
 
 
-#if 1
-// Отключаем, если координатные оси не нужны
     // Отмечаем границы холста
     auto cornerPoints = vtkSmartPointer< vtkPoints >::New();
     const bool showCorner = option[ "show-corner" ];
@@ -273,7 +272,6 @@ inline VTKVisual& VTKVisual::operator<<(
         hasAxes = true;
 
     } // if ( showAxesT )
-#endif
 
 
     // Обновляем что нарисовали

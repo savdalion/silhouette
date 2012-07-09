@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coord-type.h>
+#include <coord.h>
 #include "../BitMap.h"
 
 

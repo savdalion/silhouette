@@ -3,9 +3,9 @@
 #include <Shaper.h>
 #include <shape/Ellipsoid.h>
 #include <shape/ElevationMap.h>
-#include <InverseFilterMapContent.h>
-#include <NeightbourFilterMapContent.h>
-#include <OutlineFilterMapContent.h>
+#include <mapcontent3d/InverseFilterMap.h>
+#include <mapcontent3d/NeightbourFilterMap.h>
+#include <mapcontent3d/OutlineFilterMap.h>
 #include <io/VTKVisual.h>
 #include <io/SurfaceVTKVisual.h>
 
@@ -42,7 +42,19 @@ int main( int argc, char** argv ) {
     );
 
     // Визуализируем холст средствами VTK > http://vtk.org
+/* - Переписано через json-параметризацию. См. ниже.
     siu::io::VTKVisual< 700, 2, true, true >  visual;
+*/
+
+    io::VTKVisual::option_t o;
+    o[ "size-window" ] = 700;
+    o[ "size-point" ] = 2;
+    o[ "show-corner" ] = true;
+    o[ "show-axes" ] = true;
+    o[ "rgba" ] = 0x1111FFFF;
+
+    io::VTKVisual visual( o );
+
     visual << bm;
     visual.wait();
 }
@@ -134,7 +146,6 @@ int main( int argc, char** argv ) {
     o[ "show-axes" ] = true;
     o[ "rgba" ] = 0x00000000;
     //o[ "rgba" ] = 0xFFFFFFFF;
-
 
     io::VTKVisual visual( o );
 

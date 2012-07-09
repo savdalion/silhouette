@@ -1,8 +1,8 @@
 #pragma once
 
 #include <BitMap.h>
-#include <other-type.h>
-#include <json-type.h>
+#include <other.h>
+#include <json.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <BitMap.h>
-#include <other-type.h>
+#include <other.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>

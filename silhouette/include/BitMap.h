@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BitMapContent3D.h>
+#include <mapcontent3d/BitMap.h>
 
 
 namespace siu {
@@ -11,11 +11,11 @@ namespace siu {
 */
 template< size_t Grid >
 class BitMap :
-    public typelib::BitMapContent3D< Grid, Grid, Grid >
+    public typelib::BitMap< Grid, Grid, Grid >
 {
 public:
     inline BitMap() {
-        /* - Лишнее: typelib::BitMapContent3D сразу создаётся пустой.
+        /* - Лишнее: typelib::BitMap сразу создаётся пустой.
         set( false );
         */
     }

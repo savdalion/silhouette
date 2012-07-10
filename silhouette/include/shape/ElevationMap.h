@@ -26,7 +26,7 @@ class ElevationMap : public Shape< Grid > {
 public:
     /**
     * Источник карты высот.
-    * Напрмиер, путь к файлу PNG.
+    * Например, путь к файлу PNG.
     */
     const std::string source;
 

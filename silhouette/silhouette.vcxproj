@@ -69,10 +69,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\BitMap.h" />
     <ClInclude Include="include\configure.h" />
     <ClInclude Include="include\io\SurfaceVTKVisual.h" />
     <ClInclude Include="include\io\VTKVisual.h" />
+    <ClInclude Include="include\ScaleBitMap.h" />
     <ClInclude Include="include\Shaper.h" />
     <ClInclude Include="include\shape\ElevationMap.h" />
     <ClInclude Include="include\shape\Ellipsoid.h" />
@@ -82,6 +82,7 @@
     <None Include="include\io\VTKVisual.inl">
       <FileType>Document</FileType>
     </None>
+    <None Include="include\ScaleBitMap.inl" />
     <None Include="include\shape\ElevationMap.inl">
       <FileType>Document</FileType>
     </None>

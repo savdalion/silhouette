@@ -2,12 +2,12 @@ namespace siu {
     namespace shape {
 
 
-template< size_t Grid >
-template< typename IT >
-inline ElevationMap< Grid >::ElevationMap(
+template< size_t SX, size_t SY, size_t SZ >
+template< typename T >
+inline ElevationMap< SX, SY, SZ >::ElevationMap(
     const std::string& source,
-    IT scaleXY,
-    IT hMin, IT hMax,
+    T scaleXY,
+    T hMin, T hMax,
     bool fill
 ) :
     source( source ),
@@ -31,8 +31,8 @@ inline ElevationMap< Grid >::ElevationMap(
 
 
 
-template< size_t Grid >
-inline ElevationMap< Grid >::~ElevationMap() {
+template< size_t SX, size_t SY, size_t SZ >
+inline ElevationMap< SX, SY, SZ >::~ElevationMap() {
 }
 
 
@@ -40,8 +40,8 @@ inline ElevationMap< Grid >::~ElevationMap() {
 
 
 
-template< size_t Grid >
-inline float ElevationMap< Grid >::sizeMax() const {
+template< size_t SX, size_t SY, size_t SZ >
+inline typelib::coord_t ElevationMap< SX, SY, SZ >::sizeMax() const {
     if (sizeImage_.first == 0) {
         sizeImage( &sizeImage_, source );
         assert( (sizeImage_.first != 0)
@@ -49,8 +49,9 @@ inline float ElevationMap< Grid >::sizeMax() const {
         assert( (sizeImage_.first == sizeImage_.second)
             && "Работать умеем только с равносторонней картой." );
     }
-    const float ti = std::max( sizeImage_.first, sizeImage_.second ) * scaleXY;
-    return std::max( hReal, ti );
+    //const float ti = std::max( sizeImage_.first, sizeImage_.second ) * scaleXY;
+    //return std::max( hReal, ti );
+    return typelib::coord_t( sizeImage_.first * scaleXY,  sizeImage_.second * scaleXY,  hReal );
 }
 
 
@@ -364,8 +365,8 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
 
 
-template< size_t Grid >
-typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >::operator()(
+template< size_t SX, size_t SY, size_t SZ >
+typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< SX, SY, SZ >::operator()(
     const typelib::coord_t& areaMin,
     const typelib::coord_t& areaMax
 ) {
@@ -383,7 +384,7 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     Wrapper wrapper;
 
     std::ostringstream ss;
-    ss << Grid << "x" << Grid;
+    ss << SX << " x " << SY;
     try {
         wrapper.image.read( source.c_str() );
         wrapper.image.zoom( ss.str() );
@@ -405,8 +406,10 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
     // Для правильных коэффициентов нужно просмотреть *всю карту*
     int vHMin = INT_MAX;
     int vHMax = INT_MIN;
-    for (size_t j = 0; j < wrapper.image.size().height(); ++j) {
-        for (size_t i = 0; i < wrapper.image.size().width(); ++i) {
+    const size_t imageSizeHeight = wrapper.image.size().height();
+    const size_t imageSizeWidth = wrapper.image.size().width();
+    for (size_t j = 0; j < imageSizeHeight; ++j) {
+        for (size_t i = 0; i < imageSizeWidth; ++i) {
             // высота представлена чёрно-белой градацией: R == G == B
             wrapper.color = wrapper.image.pixelColor( i, j );
             /* - Палитра скорректирована выше.
@@ -425,42 +428,45 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
         } // for (int i
 
     } // for (int j
+
     assert( (vHMax >= vHMin) && "Коэффициенты нормализации не собраны." );
-    //const int vHCenter = (vHMax - vHMin) / 2;
+
     // равнина
     const bool flat = (vHMax == vHMin);
     const int vH = (flat ? 255 : (vHMax - vHMin)) + 1;
-    //const int vHMedian = vH / 2;
 
-    // Масштаб картинки по высоте, пкс / км
+    // Масштаб картинки по осям, пкс / км
+    const float scaleX =
+        scaleXY * static_cast< float >( SX ) / static_cast< float >( SY );
+    const float scaleY =
+        scaleXY * static_cast< float >( SY ) / static_cast< float >( SX );
     const float scaleZ =
         static_cast< float >( vH ) / static_cast< float >(hMax - hMin);
 
-    const int G = static_cast< int >( Grid );
-    const float inOneG = sizeGrid();
-    const int maxCoordCube = static_cast< int >( bm.maxCoord().x );
-    assert( ((maxCoordCube * 2 + 1) == Grid)
+    const typelib::coordInt_t S( SX, SY, SZ );
+    const typelib::coord_t inOneG = sizeGrid();
+    const typelib::coordInt_t maxCoord = bm_t::maxCoord();
+    assert( ((maxCoord * 2 + 1) == S)
         && "Сетка не согласована с координантами." );
-    //const float hMedian = (hMax - hMin) / 2.0f;  // == hReal / 2.0
 
-    //const float scale = 1.0f / sizeMax();
-
-    // Коэффициент для корректировки высоты согласно масштабу
+    // Коэффициент для корректировки согласно масштабу
+    const float kX = scaleXY / scaleX;
+    const float kY = scaleXY / scaleY;
     const float kZ = scaleXY / scaleZ;
 
     // Где, с учётом масштаба и высоты, у нас будет "пол" карты высот
     const int floorZ = -static_cast< int >(
-        static_cast< float >( maxCoordCube ) * kZ
+        static_cast< float >( maxCoord.z ) * kZ
     );
 
 
     // Собираем поверхность: пробегаем по сетке XY
-    for (int y = -maxCoordCube; y <= maxCoordCube; ++y) {
-        const int py = y + maxCoordCube;
+    for (int y = -maxCoord.y; y <= maxCoord.y; ++y) {
+        const int py = (y + maxCoord.y) * kY;
         // Находим координаты внутри изображения карты высот
         // (изображение уже приведено к размеру сетки)
-        for (int x = -maxCoordCube; x <= maxCoordCube; ++x) {
-            const int px = x + maxCoordCube;
+        for (int x = -maxCoord.x; x <= maxCoord.x; ++x) {
+            const int px = (x + maxCoord.x) * kX;
             // Получаем значение высоты в этой ячейке;
             // высота представлена чёрно-белой градацией: RGB всегда равны
             wrapper.color = wrapper.image.pixelColor( px, py );
@@ -475,8 +481,8 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
             const float tz = (
                 static_cast< float >( h ) / static_cast< float >( vHMax + 1 )
-                * static_cast< float >( G )
-                - static_cast< float >( maxCoordCube )
+                * static_cast< float >( S.z )
+                - static_cast< float >( maxCoord.z )
                 - 1
                 // высоту надо скорректировать по масштабу картинки
             ) * kZ;
@@ -516,8 +522,8 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
 
 
-template< size_t Grid >
-void siu::shape::ElevationMap< Grid >::sizeImage(
+template< size_t SX, size_t SY, size_t SZ >
+void siu::shape::ElevationMap< SX, SY, SZ >::sizeImage(
     std::pair< size_t, size_t >* rSizeImage,
     const std::string& source
 ) {

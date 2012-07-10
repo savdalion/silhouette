@@ -27,9 +27,6 @@
     <ClInclude Include="include\Shaper.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="include\BitMap.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
     <ClInclude Include="include\io\SurfaceVTKVisual.h">
       <Filter>Заголовочные файлы\io</Filter>
     </ClInclude>
@@ -45,6 +42,9 @@
     <ClInclude Include="include\shape\Shape.h">
       <Filter>Заголовочные файлы\shape</Filter>
     </ClInclude>
+    <ClInclude Include="include\ScaleBitMap.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\io\VTKVisual.inl">
@@ -55,6 +55,9 @@
     </None>
     <None Include="include\shape\Ellipsoid.inl">
       <Filter>Заголовочные файлы\shape</Filter>
+    </None>
+    <None Include="include\ScaleBitMap.inl">
+      <Filter>Заголовочные файлы</Filter>
     </None>
   </ItemGroup>
 </Project>

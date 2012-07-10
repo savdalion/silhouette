@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coord.h>
-#include "../BitMap.h"
+#include <mapcontent3d/BitMap.h>
 
 
 
@@ -12,17 +12,21 @@ namespace siu {
 /**
 * Функтор - для common::Shaper, базовый класс - для форм.
 *
-* @template Grid Кол-во ячеек битовой карты.
+* @template SX Кол-во ячеек биткарты по оси X.
+* @template SY Кол-во ячеек биткарты по оси Y.
+* @template SZ Кол-во ячеек биткарты по оси Z.
 */
-template< size_t Grid >
+template< size_t SX, size_t SY, size_t SZ >
 class Shape {
 public:
-    typedef BitMap< Grid >  bm_t;
+    typedef typelib::BitMap< SX, SY, SZ >  bm_t;
 
 
 public:
     inline Shape() : bm() {
-        static_assert( (Grid != 0), "Количество ячеек для битовой карты необходимо указать." );
+        static_assert( (SX != 0), "Количество ячеек по оси X для биткарты необходимо указать." );
+        static_assert( (SY != 0), "Количество ячеек по оси Y для биткарты необходимо указать." );
+        static_assert( (SZ != 0), "Количество ячеек по оси Z для биткарты необходимо указать." );
     }
 
 
@@ -34,8 +38,6 @@ public:
 
     /**
     * Создаёт битовую карту.
-    *
-    * @param np 
     */
     virtual bm_t operator()(
         const typelib::coord_t& areaMin = typelib::coord_t::ZERO,
@@ -46,21 +48,21 @@ public:
 
 
     /**
-    * @return Максимальный размер формы по одной из коорд. осей.
+    * @return Максимальный размер формы.
     *
     * @see sizeGrid()
     */
-    virtual float sizeMax() const = 0;
+    virtual typelib::coord_t sizeMax() const = 0;
 
 
 
 
     /**
     * @return Размер одной ячейки сетки. Размер выбирается т.о., чтобы фигура
-    *         полностью помещалась в кубе со стороной Grid.
+    *         полностью помещалась в ячейке размером (SX, SY, SZ).
     */
-    virtual inline float sizeGrid() const {
-        return sizeMax() / static_cast< float >( Grid );
+    virtual inline typelib::coord_t sizeGrid() const {
+        return sizeMax() / typelib::coord_t( SX, SY, SZ );
     }
 
 
@@ -75,7 +77,7 @@ public:
         const typelib::coord_t& areaMin,
         const typelib::coord_t& areaMax
     ) {
-        return !outside( x, y, z, araeMin, areaMax );
+        return !outside( x, y, z, areaMin, areaMax );
     }
 
 

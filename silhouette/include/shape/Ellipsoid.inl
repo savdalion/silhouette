@@ -2,10 +2,10 @@ namespace siu {
     namespace shape {
 
 
-template< size_t Grid >
-template< typename IT >
-inline Ellipsoid< Grid >::Ellipsoid(
-    IT rx, IT ry, IT rz,
+template< size_t SX, size_t SY, size_t SZ >
+template< typename T >
+inline Ellipsoid< SX, SY, SZ >::Ellipsoid(
+    T rx, T ry, T rz,
     bool fill
 ) :
     rx( static_cast< float >( rx ) ),
@@ -20,8 +20,8 @@ inline Ellipsoid< Grid >::Ellipsoid(
 
 
 
-template< size_t Grid >
-inline Ellipsoid< Grid >::~Ellipsoid() {
+template< size_t SX, size_t SY, size_t SZ >
+inline Ellipsoid< SX, SY, SZ >::~Ellipsoid() {
 }
 
 
@@ -171,8 +171,8 @@ inline Ellipsoid< Grid >::~Ellipsoid() {
 
 
 
-template< size_t Grid >
-inline typename Ellipsoid< Grid >::bm_t Ellipsoid< Grid >::operator()(
+template< size_t SX, size_t SY, size_t SZ >
+inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator()(
     const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
     const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
 ) {
@@ -184,8 +184,8 @@ inline typename Ellipsoid< Grid >::bm_t Ellipsoid< Grid >::operator()(
 
     // граничные координаты сетки
     // (0, 0, 0) - центр
-    const int maxGCoord = (static_cast< int >( Grid ) - 1) / 2;
-    const int minGCoord = -maxGCoord;
+    const typelib::coordInt_t maxCoord = bm_t::maxCoord();
+    const typelib::coordInt_t minCoord = -maxCoord;
 
     // масштаб будет изменён, если указана не пустая область
     if ( (areaMin - areaMax) != typelib::coord_t::ZERO() ) {
@@ -198,15 +198,16 @@ inline typename Ellipsoid< Grid >::bm_t Ellipsoid< Grid >::operator()(
 
     // Работаем с родительской структурой 'bm'
 
-    const float sizeG = sizeGrid();
-    const float rx2 = rx * rx / (sizeG * sizeG);
-    const float ry2 = ry * ry / (sizeG * sizeG);
-    const float rz2 = rz * rz / (sizeG * sizeG);
-    for (int z = minGCoord; z <= maxGCoord; ++z) {
+    const typelib::coord_t sizeG = sizeGrid();
+    const float maxSizeG2 = sizeG.max() * sizeG.max();
+    const float rx2 = rx * rx / maxSizeG2;
+    const float ry2 = ry * ry / maxSizeG2;
+    const float rz2 = rz * rz / maxSizeG2;
+    for (int z = minCoord.z; z <= maxCoord.z; ++z) {
         const float tz = static_cast< float >( z * z ) / rz2;
-        for (int y = minGCoord; y <= maxGCoord; ++y) {
+        for (int y = minCoord.y; y <= maxCoord.y; ++y) {
             const float ty = static_cast< float >( y * y ) / ry2;
-            for (int x = minGCoord; x <= maxGCoord; ++x) {
+            for (int x = minCoord.x; x <= maxCoord.x; ++x) {
                 /* - @todo Контролировать области. См. @todo выше.
                 if ( outside( x, y, z, areaMin, areaMax ) ) {
                     continue;
@@ -216,13 +217,14 @@ inline typename Ellipsoid< Grid >::bm_t Ellipsoid< Grid >::operator()(
                 const float t = tx + ty + tz;
                 if ( fill ) {
                     // заполнен целиком
-                    if (t < 1.001f) {
+                    if (t < (1.0f + typelib::PRECISION)) {
                         bm.set( x, y, z );
                     }
                 } else {
                     // только поверхность
-                    if ( (t < 1.001f) && (t > 0.999f) ) {
-                        bm.set( x, y,  z );
+                    //if ( (t < (1.0f + typelib::PRECISION)) && (t > (1.0f - typelib::PRECISION)) ) {
+                    if ( typelib::between( t,  1.0f - typelib::PRECISION,  1.0f + typelib::PRECISION ) ) {
+                        bm.set( x, y, z );
                     }
                 }
 
@@ -237,10 +239,9 @@ inline typename Ellipsoid< Grid >::bm_t Ellipsoid< Grid >::operator()(
 
 
 
-template< size_t Grid >
-inline float Ellipsoid< Grid >::sizeMax() const {
-    const float rMax = std::max( std::max( rx, ry ), rz );
-    return 2.0f * rMax;
+template< size_t SX, size_t SY, size_t SZ >
+inline typelib::coord_t Ellipsoid< SX, SY, SZ >::sizeMax() const {
+    return typelib::coord_t( rx, ry, rz ) * 2.0f;
 }
 
 

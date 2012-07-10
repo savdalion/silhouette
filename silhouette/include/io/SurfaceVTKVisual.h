@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BitMap.h>
+#include <mapcontent3d/BitMap.h>
 #include <other.h>
 
 #include <vtkPointSource.h>
@@ -101,9 +101,13 @@ public:
     * Визуализирует холст. Если окно визуализации ещё не было создано, оно
     * создаётся. Иначе, холст добавляется к текущему окну.
     */
-    template< size_t Grid >
-    inline SurfaceVTKVisual& operator<<( const BitMap< Grid >&  bm ) {
+    template< size_t SX, size_t SY, size_t SZ >
+    inline SurfaceVTKVisual& operator<<( const typename typelib::BitMap< SX, SY, SZ >&  bm ) {
 
+        assert( false && "Не реализовано." );
+
+#if 0
+// - @todo Переписать на основании изменений VTKVisual.
         // Переводим полученный холст в формат VTK
         // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
 
@@ -247,6 +251,7 @@ public:
         // Обновляем что нарисовали
         renderer->ResetCamera();
         renderWindow->Render();
+#endif
 
         return *this;
     }

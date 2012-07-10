@@ -9,10 +9,10 @@ namespace siu {
 /**
 * Эллипосид.
 *
-* @template См. Shape
+* @template См. Shape.
 */
-template< size_t Grid >
-class Ellipsoid : public Shape< Grid > {
+template< size_t SX, size_t SY, size_t SZ >
+class Ellipsoid : public Shape< SX, SY, SZ > {
 public:
     /**
     * Размеры.
@@ -29,9 +29,9 @@ public:
 
 
 public:
-    template< typename IT >
+    template< typename T >
     Ellipsoid(
-        IT rx, IT ry, IT rz,
+        T rx, T ry, T rz,
         bool fill
     );
 
@@ -53,7 +53,7 @@ public:
 
 
     
-    virtual float sizeMax() const;
+    virtual typelib::coord_t sizeMax() const;
 
 
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "shape/Shape.h"
-#include "BitMap.h"
 #include <coord.h>
 
 
@@ -10,11 +9,15 @@ namespace siu {
 
 /**
 * –исует форму, использу€ указанный функтор.
+*
+* @template SX  ол-во €чеек биткарты по оси X.
+* @template SY  ол-во €чеек биткарты по оси Y.
+* @template SZ  ол-во €чеек биткарты по оси Z.
 */
-template< size_t Grid >
+template< size_t SX, size_t SY, size_t SZ >
 class Shaper {
 public:
-    inline Shaper( shape::Shape< Grid >* functor ) : functor( functor ) {
+    inline Shaper( shape::Shape< SX, SY, SZ >* functor ) : functor( functor ) {
     }
 
 
@@ -26,7 +29,7 @@ public:
     /**
     * @return ‘орма в виде облака точек (битовой карты).
     */
-    inline typename shape::Shape< Grid >::bm_t draw(
+    inline typename shape::Shape< SX, SY, SZ >::bm_t draw(
         const typelib::coord_t& areaMin = typelib::coord_t::ZERO(),
         const typelib::coord_t& areaMax = typelib::coord_t::ZERO()
     ) const {
@@ -42,7 +45,7 @@ public:
 
 
 private:
-    shape::Shape< Grid >* functor;
+    shape::Shape< SX, SY, SZ >*  functor;
 
 };
 

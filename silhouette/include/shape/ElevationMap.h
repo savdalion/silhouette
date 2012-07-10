@@ -21,8 +21,8 @@ namespace siu {
 *
 * @template См. Shape
 */
-template< size_t Grid >
-class ElevationMap : public Shape< Grid > {
+template< size_t SX, size_t SY, size_t SZ >
+class ElevationMap : public Shape< SX, SY, SZ > {
 public:
     /**
     * Источник карты высот.
@@ -32,6 +32,8 @@ public:
 
     /**
     * Масштаб плоской картинки, пкс / км.
+    * Задействованы афинные преобразования, поэтому нет нужды указывать
+    * отдельно масштабы (коэф. масштабирования) по X и Y.
     */
     const float scaleXY;
 
@@ -57,11 +59,15 @@ public:
 
 
 public:
-    template< typename IT >
+    /**
+    * @template T Позволяет передавать карте высот числа разного
+    *           типа (double, float, int).
+    */
+    template< typename T >
     ElevationMap(
         const std::string& source,
-        IT scaleXY,
-        IT hMin, IT hMax,
+        T scaleXY,
+        T hMin, T hMax,
         bool fill
     );
 
@@ -84,7 +90,7 @@ public:
 
 
 
-    virtual float sizeMax() const;
+    virtual typelib::coord_t sizeMax() const;
 
 
 

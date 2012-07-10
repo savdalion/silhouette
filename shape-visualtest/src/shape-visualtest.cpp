@@ -1,7 +1,7 @@
 #include "../include/StdAfx.h"
 #include "../include/configure.h"
-#include <BitMap.h>
-//#include <ScaleBitMap.h>
+#include <mapcontent3d/BitMap.h>
+#include "ScaleBitMap.h"
 #include <Shaper.h>
 #include <shape/Ellipsoid.h>
 #include <shape/ElevationMap.h>
@@ -31,14 +31,17 @@ int main( int argc, char** argv ) {
 
 #ifdef ELLIPSOID_SHAPE_SIU_VISUALTEST
 {
-    const size_t GRID = 81;
+    const size_t SX = 81;
+    const size_t SY = 81;
+    const size_t SZ = SX;
+    typedef typelib::BitMap< SX, SY, SZ >  bm_t;
+
     const auto rz = 6000.0 * 1000.0;
     const auto rx = rz * 1.8;
     const auto ry = rz * 1.2;
-    Ellipsoid< GRID >  elli( rx, ry, rz, true );
-    const Shaper< GRID >  shaper( &elli );
-    // извлекаем квадрант эллипса
-    const auto bm = shaper.draw(
+    Ellipsoid< SX, SY, SZ >  elli( rx, ry, rz, true );
+    const Shaper< SX, SY, SZ >  shaper( &elli );
+    const bm_t bm = shaper.draw(
         //coord_t( -rx, 0.0f, -rz ),
         //coord_t( 0.0f, ry, rz )
     );
@@ -67,29 +70,32 @@ int main( int argc, char** argv ) {
 
 #ifdef ELEVATION_MAP_SHAPE_SIU_VISUALTEST
 {
-    const size_t GRID = 81;
-    typedef BitMap< GRID >  bm_t;
+    // @todo (!) Ќе корректно масштабирует при SX != SY и не пропорциональной исходной картинке.
+    const size_t SX = 81;
+    const size_t SY = 81;
+    // т.к. высота много меньше размера поверхности, вводим "коэффициент дл€
+    // нагл€дности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
+    const size_t clearness = 5;
+    const size_t SZ = SX * clearness;
+    typedef typelib::BitMap< SX, SY, SZ >  bm_t;
 
     //const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
-    const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-middle.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min-max.png";
 
-    //const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
+    const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
     // картинка "mars/b/gray-elevation.png" прот€жЄнностью 400 пкс или ~200 км
     // (согласно масштабам Google Earth)
     // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7
     const double scaleXY = 200.0 / 400.0;
-    // т.к. высота много меньше размера поверхности, вводим "коэффициент дл€
-    // нагл€дности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
     // @todo ќтрабатывать момент, когда размер по Z превышает размеры XY.
-    const double clearness = 5;
-    const double hMin = -10.0 * clearness;
-    const double hMax = 20.0 * clearness;
-    ElevationMap< GRID >  elm( source, scaleXY, hMin, hMax, true );
-    const Shaper< GRID >  shaper( &elm );
+    const double hMin = -10.0;
+    const double hMax = 20.0;
+    ElevationMap< SX, SY, SZ >  elm( source, scaleXY, hMin, hMax, true );
+    const Shaper< SX, SY, SZ >  shaper( &elm );
     bm_t bm = shaper.draw();
 
 
@@ -164,11 +170,11 @@ int main( int argc, char** argv ) {
 #ifdef SCALE_ELEVATION_MAP_SHAPE_SIU_VISUALTEST
 {
     const size_t GRID1 = 15;
-    typedef ScaleBitMap< GRID1 >  sbm1_t;
-    typedef BitMap< GRID1 >  bm1_t;
+    typedef ScaleBitMap< GRID1, GRID1, GRID1 >  sbm1_t;
+    typedef typelib::BitMap< GRID1, GRID1, GRID1 >  bm1_t;
     const size_t GRID2 = 81;
-    typedef ScaleBitMap< GRID2 >  sbm2_t;
-    typedef BitMap< GRID2 >  bm2_t;
+    typedef ScaleBitMap< GRID2, GRID2, GRID2 >  sbm2_t;
+    typedef typelib::BitMap< GRID2, GRID2, GRID2 >  bm2_t;
 
     //const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
     const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
@@ -191,16 +197,18 @@ int main( int argc, char** argv ) {
 
     // верхний слой
     sbm1_t a;
+    // @todo extend ѕозволить работать с разносторонней картой высот.
     a << ElevationMap< GRID1 >( source, scaleXY, hMin, hMax, true );
 
-    // нижний слой: кажда€ €чейка верхнего сло€ содержит GRID2 €чеек нижнего
+    // нижний слой: *кажда€* €чейка верхнего сло€ содержит GRID2 €чеек нижнего
     sbm2_t b;
     b << a;
 
     // получаем образ верхнего сло€
     bm1_t bmA = a.draw();
 
-    // получаем образ нижнего сло€ в указанной €чейке сло€ 'a'
+    // получаем образ нижнего сло€
+    // (требуютс€ координаты €чейки в слое 'a')
     bm2_t bmB = b.draw( 0, 0, 0 );
 
 

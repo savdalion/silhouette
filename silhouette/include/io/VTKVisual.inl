@@ -46,23 +46,26 @@ inline VTKVisual::~VTKVisual() {
 
 
 
-template< size_t Grid >
+
+
+template< size_t SX, size_t SY, size_t SZ >
 inline VTKVisual& VTKVisual::operator<<(
-    const BitMap< Grid >&  bm
+    const typename typelib::BitMap< SX, SY, SZ >&  bm
 ) {
     if ( bm.empty() ) {
         // не рисуем ни точек, ни осей - абс. пустота
         return *this;
     }
 
-    typedef BitMap< Grid >  bm_t;
+    typedef typelib::BitMap< SX, SY, SZ >  bm_t;
 
     // Переводим полученный холст в формат VTK
     // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
 
     // для центрирования и отметок границ сетки
-    const float halfN = static_cast< float >( Grid - 1 ) / 2.0f;
-    const float shiftCenter = 0.0f;
+    const typelib::coord_t halfN =
+        (typelib::coord_t( SX, SY, SZ ) - 1.0f) / 2.0f;
+    const typelib::coord_t shiftCenter = typelib::coord_t::ZERO();
 
     auto points = vtkSmartPointer< vtkPoints >::New();
     auto vertices = vtkSmartPointer< vtkCellArray >::New();
@@ -84,9 +87,9 @@ inline VTKVisual& VTKVisual::operator<<(
     do {
         const typelib::coordInt_t c = bm_t::ci( i );
         const float cf[3] = {
-            static_cast< float >( c.x ) + shiftCenter,
-            static_cast< float >( c.y ) + shiftCenter,
-            static_cast< float >( c.z ) + shiftCenter
+            static_cast< float >( c.x ) + shiftCenter.x,
+            static_cast< float >( c.y ) + shiftCenter.y,
+            static_cast< float >( c.z ) + shiftCenter.z
         };
         vtkIdType pid[ 1 ];
         // @todo optimize Использовать более быстрое заполнение точками и вершинами.
@@ -202,15 +205,15 @@ inline VTKVisual& VTKVisual::operator<<(
         auto cornerVertices = vtkSmartPointer< vtkCellArray >::New();
         const size_t NP = 1 + 8;
         const float p[ NP ][ 3 ] = {
-            {  0,      0,      0     },
-            {  halfN,  halfN,  halfN },
-            {  halfN,  halfN, -halfN },
-            {  halfN, -halfN,  halfN },
-            {  halfN, -halfN, -halfN },
-            { -halfN,  halfN,  halfN },
-            { -halfN,  halfN, -halfN },
-            { -halfN, -halfN,  halfN },
-            { -halfN, -halfN, -halfN }
+            {  0.0f,     0.0f,     0.0f     },
+            {  halfN.x,  halfN.y,  halfN.z },
+            {  halfN.x,  halfN.y, -halfN.z },
+            {  halfN.x, -halfN.y,  halfN.z },
+            {  halfN.x, -halfN.y, -halfN.z },
+            { -halfN.x,  halfN.y,  halfN.z },
+            { -halfN.x,  halfN.y, -halfN.z },
+            { -halfN.x, -halfN.y,  halfN.z },
+            { -halfN.x, -halfN.y, -halfN.z }
         };
         vtkIdType pid[ NP ];
         for (size_t i = 0; i < NP; ++i) {
@@ -254,9 +257,9 @@ inline VTKVisual& VTKVisual::operator<<(
             auto cubeAxesActor = vtkSmartPointer< vtkCubeAxesActor >::New();
             // Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
             double bounds[6] = {
-                -halfN,  halfN,
-                -halfN,  halfN,
-                -halfN,  halfN
+                -halfN.x,  halfN.x,
+                -halfN.y,  halfN.y,
+                -halfN.z,  halfN.z
             };
             cubeAxesActor->SetBounds( bounds );
             //cubeAxesActor->SetBounds( points->GetBounds() );

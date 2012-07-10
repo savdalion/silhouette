@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BitMap.h>
+#include <mapcontent3d/BitMap.h>
 #include <other.h>
 #include <json.h>
 
@@ -76,8 +76,8 @@ public:
     * Визуализирует холст. Если окно визуализации ещё не было создано, оно
     * создаётся. Иначе, холст добавляется к текущему окну.
     */
-    template< size_t Grid >
-    VTKVisual& operator<<( const BitMap< Grid >&  bm );
+    template< size_t SX, size_t SY, size_t SZ >
+    VTKVisual& operator<<( const typename typelib::BitMap< SX, SY, SZ >&  bm );
 
 
 

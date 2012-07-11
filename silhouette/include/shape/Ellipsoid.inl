@@ -173,8 +173,8 @@ inline Ellipsoid< SX, SY, SZ >::~Ellipsoid() {
 
 template< size_t SX, size_t SY, size_t SZ >
 inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator()(
-    const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
-    const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
+    const typelib::coordInt_t& c,
+    size_t OSX, size_t OSY, size_t OSZ
 ) {
     /* нормализованный размер
     const float normalRX = rx / rMax;

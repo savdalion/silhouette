@@ -17,8 +17,8 @@ const std::string PATH_MEDIA = "D:/Projects/workspace/silhouette/shape-visualtes
 * Показывать эти формы.
 */
 //#define ELLIPSOID_SHAPE_SIU_VISUALTEST
-#define ELEVATION_MAP_SHAPE_SIU_VISUALTEST
-//#define SCALE_ELEVATION_MAP_SHAPE_SIU_VISUALTEST
+//#define ELEVATION_MAP_SHAPE_SIU_VISUALTEST
+#define SCALE_ELEVATION_MAP_SHAPE_SIU_VISUALTEST
 
 
 

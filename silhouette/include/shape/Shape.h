@@ -19,11 +19,28 @@ namespace siu {
 template< size_t SX, size_t SY, size_t SZ >
 class Shape {
 public:
+    /**
+    * Ссылки на карту высот.
+    */
+    typedef std::shared_ptr< Shape >  Ptr;
+    typedef std::unique_ptr< Shape >  UPtr;
+
+    /**
+    * Тип для битовой карты.
+    */
     typedef typelib::BitMap< SX, SY, SZ >  bm_t;
+
 
 
 public:
     inline Shape() : bm() {
+        static_assert( (SX != 0), "Количество ячеек по оси X для биткарты необходимо указать." );
+        static_assert( (SY != 0), "Количество ячеек по оси Y для биткарты необходимо указать." );
+        static_assert( (SZ != 0), "Количество ячеек по оси Z для биткарты необходимо указать." );
+    }
+
+
+    inline Shape( const bm_t& bm ) : bm( bm ) {
         static_assert( (SX != 0), "Количество ячеек по оси X для биткарты необходимо указать." );
         static_assert( (SY != 0), "Количество ячеек по оси Y для биткарты необходимо указать." );
         static_assert( (SZ != 0), "Количество ячеек по оси Z для биткарты необходимо указать." );
@@ -40,10 +57,23 @@ public:
     * Создаёт битовую карту.
     */
     virtual bm_t operator()(
-        const typelib::coord_t& areaMin = typelib::coord_t::ZERO,
-        const typelib::coord_t& areaMax = typelib::coord_t::ZERO
+        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
+        // масштаб задаём, когда хотим получить увеличенную часть формы
+        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
     ) = 0;
 
+
+
+
+    /**
+    * @return Форма, масштабированная до указанного размера сетки.
+    *//* - @todo ?
+    template< size_t OSX, size_t OSY, size_t OSZ >
+    inline Shape< OSX, OSY, OSZ >::Ptr scale() const {
+        const auto t = bm.scale< OSX, OSY, OSZ >();
+        return Shape< OSX, OSY, OSZ >::Ptr( new Shape< OSX, OSY, OSZ >( t ) );
+    }
+    */
 
 
 

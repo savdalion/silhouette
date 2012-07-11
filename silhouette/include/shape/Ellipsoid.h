@@ -15,6 +15,15 @@ template< size_t SX, size_t SY, size_t SZ >
 class Ellipsoid : public Shape< SX, SY, SZ > {
 public:
     /**
+    * —сылки на эллипсоид.
+    */
+    typedef std::shared_ptr< Ellipsoid >  Ptr;
+    typedef std::unique_ptr< Ellipsoid >  UPtr;
+
+
+
+public:
+    /**
     * –азмеры.
     */
     const float rx;
@@ -47,8 +56,8 @@ public:
     * Ёллипсоид строитс€ прохождением по *всем* €чейкам сетки G.
     */
     virtual bm_t operator()(
-        const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
-        const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
+        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
+        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
     );
 
 

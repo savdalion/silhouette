@@ -17,7 +17,15 @@ namespace siu {
 template< size_t SX, size_t SY, size_t SZ >
 class Shaper {
 public:
-    inline Shaper( shape::Shape< SX, SY, SZ >* functor ) : functor( functor ) {
+    /**
+    * Тип для битовой карты.
+    */
+    typedef typelib::BitMap< SX, SY, SZ >  bm_t;
+
+
+
+public:
+    inline Shaper( typename shape::Shape< SX, SY, SZ >::Ptr  functor ) : functor( functor ) {
     }
 
 
@@ -30,10 +38,12 @@ public:
     * @return Форма в виде облака точек (битовой карты).
     */
     inline typename shape::Shape< SX, SY, SZ >::bm_t draw(
-        const typelib::coord_t& areaMin = typelib::coord_t::ZERO(),
-        const typelib::coord_t& areaMax = typelib::coord_t::ZERO()
+        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
+        // масштаб задаём, когда хотим получить увеличенную часть формы
+        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
     ) const {
-        const auto bm = ( *functor )( areaMin, areaMax );
+
+        const auto bm = ( *functor )( c, OSX, OSY, OSZ );
 
         // @test
         std::cout << "Points in " << typeid( *functor ).name() << " is " << bm.count() << std::endl;
@@ -45,7 +55,7 @@ public:
 
 
 private:
-    shape::Shape< SX, SY, SZ >*  functor;
+    typename shape::Shape< SX, SY, SZ >::Ptr  functor;
 
 };
 

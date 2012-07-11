@@ -169,47 +169,58 @@ int main( int argc, char** argv ) {
 
 #ifdef SCALE_ELEVATION_MAP_SHAPE_SIU_VISUALTEST
 {
-    const size_t GRID1 = 15;
-    typedef ScaleBitMap< GRID1, GRID1, GRID1 >  sbm1_t;
-    typedef typelib::BitMap< GRID1, GRID1, GRID1 >  bm1_t;
-    const size_t GRID2 = 81;
-    typedef ScaleBitMap< GRID2, GRID2, GRID2 >  sbm2_t;
-    typedef typelib::BitMap< GRID2, GRID2, GRID2 >  bm2_t;
+    // @todo (!) Ќе корректно масштабирует при SX != SY и не пропорциональной исходной картинке.
+    const size_t SX1 = 81;
+    const size_t SY1 = 81;
+    // т.к. высота много меньше размера поверхности, вводим "коэффициент дл€
+    // нагл€дности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
+    const size_t clearness1 = 5;
+    const size_t SZ1 = SX1 * clearness1;
+    typedef ScaleBitMap< SX1, SY1, SZ1 >  sbm1_t;
+
+    const size_t SX2 = SX1;
+    const size_t SY2 = SY1;
+    const size_t clearness2 = clearness1;
+    const size_t SZ2 = SX2 * clearness2;
+    typedef ScaleBitMap< SX2, SY2, SZ2 >  sbm2_t;
 
     //const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
-    const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-min.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-middle.png";
-    //const std::string source = PATH_MEDIA + "test/a/gray-min-max.png";
+    const std::string source = PATH_MEDIA + "test/a/gray-min-max.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-zebra-1.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-zebra-2.png";
+    //const std::string source = PATH_MEDIA + "test/a/gray-zebra-20.png";
 
     //const std::string source = PATH_MEDIA + "mars/b/gray-elevation.png";
     // картинка "mars/b/gray-elevation.png" прот€жЄнностью 400 пкс или ~200 км
     // (согласно масштабам Google Earth)
     // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7
     const double scaleXY = 200.0 / 400.0;
-    // т.к. высота много меньше размера поверхности, вводим "коэффициент дл€
-    // нагл€дности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
     // @todo ќтрабатывать момент, когда размер по Z превышает размеры XY.
-    const double clearness = 5;
-    const double hMin = -10.0 * clearness;
-    const double hMax = 20.0 * clearness;
+    const double hMin = -10.0;
+    const double hMax = 20.0;
 
     // верхний слой
     sbm1_t a;
-    // @todo extend ѕозволить работать с разносторонней картой высот.
-    a << ElevationMap< GRID1 >( source, scaleXY, hMin, hMax, true );
+    a << ElevationMap< SX1, SY1, SZ1 >( source, scaleXY, hMin, hMax, true );
 
-    // нижний слой: *кажда€* €чейка верхнего сло€ содержит GRID2 €чеек нижнего
+    // нижний слой: *кажда€* €чейка верхнего сло€ содержит SX2 * SY2 * SZ2 €чеек нижнего;
+    // два сло€ содержат (SX2 * SY2 * SZ2) * (SX1 * SY1 * SZ1) €чеек
     sbm2_t b;
     b << a;
 
     // получаем образ верхнего сло€
-    bm1_t bmA = a.draw();
+    sbm1_t::bm_t bmA = a.draw();
 
     // получаем образ нижнего сло€
     // (требуютс€ координаты €чейки в слое 'a')
-    bm2_t bmB = b.draw( 0, 0, 0 );
+    // @todo Ќе работает. »справить.
+    sbm2_t::bm_t bmB = b.draw( 0, 0, 0 );
+    //sbm2_t::bm_t bmB = b.draw( sbm2_t::bm_t::minCoord() );
+    //sbm2_t::bm_t bmB = b.draw( 0, 0, 10 );
 
 
 
@@ -222,21 +233,24 @@ int main( int argc, char** argv ) {
 #if 0
     // ќставл€ем только внешний контур
     typelib::OutlineFilterMapContent< true >  outline;
-    outline( bm );
+    outline( bmA );
+    outline( bmB );
 #endif
 
 
 #if 0
     // ќставл€ем тех, р€дом с которыми заданное кол-во соседей
     typelib::NeightbourFilterMapContent< 1, 10, true >  neighbour;
-    neighbour( bm );
+    outline( bmA );
+    outline( bmB );
 #endif
 
 
 #if 0
     // »нвертируем
     typelib::InverseFilterMapContent  inverse;
-    inverse( bm );
+    outline( bmA );
+    outline( bmB );
 #endif
 
 
@@ -263,17 +277,24 @@ int main( int argc, char** argv ) {
 */
     io::VTKVisual::option_t o;
     o[ "size-window" ] = 700;
-    o[ "size-point" ] = 3;
+    o[ "size-point" ] = 1;
     o[ "show-corner" ] = true;
     o[ "show-axes" ] = true;
-    o[ "rgba" ] = 0x00000000;
-    //o[ "rgba" ] = 0xFFFFFFFF;
+    //o[ "rgba" ] = 0x00000000;
+    o[ "rgba" ] = 0xFFFFFFFF;
 
-    io::VTKVisual visual( o );
+#if 0
+    io::VTKVisual visualA( o );
+    visualA << bmA;
+    visualA.wait();
+#endif
 
-    visual << bmA;
+#if 1
+    io::VTKVisual visualB( o );
+    visualB << bmB;
+    visualB.wait();
+#endif
 
-    visual.wait();
 }
 #endif
 

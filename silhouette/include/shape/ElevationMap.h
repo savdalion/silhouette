@@ -25,6 +25,15 @@ template< size_t SX, size_t SY, size_t SZ >
 class ElevationMap : public Shape< SX, SY, SZ > {
 public:
     /**
+    * Ссылки на карту высот.
+    */
+    typedef std::shared_ptr< ElevationMap >  Ptr;
+    typedef std::unique_ptr< ElevationMap >  UPtr;
+
+
+
+public:
+    /**
     * Источник карты высот.
     * Например, путь к файлу PNG.
     */
@@ -83,8 +92,8 @@ public:
     * @virtual Shape
     */
     virtual bm_t operator()(
-        const typelib::coord_t& areaMin = typelib::coord_t( 0.0f, 0.0f, 0.0f ),
-        const typelib::coord_t& areaMax = typelib::coord_t( 0.0f, 0.0f, 0.0f )
+        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
+        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
     );
 
 

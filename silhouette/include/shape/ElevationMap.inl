@@ -367,10 +367,9 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
 template< size_t SX, size_t SY, size_t SZ >
 typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< SX, SY, SZ >::operator()(
-    const typelib::coord_t& areaMin,
-    const typelib::coord_t& areaMax
+    const typelib::coordInt_t& c,
+    size_t OSX, size_t OSY, size_t OSZ
 ) {
-
     // Самый простой способ - привести изображение к размеру Grid: т.о.
     // мы без лишних хлопот получим хорошо усреднённую карту высот
 
@@ -378,18 +377,23 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
 
     Magick::InitializeMagick( nullptr );
 
-    // Читаем изображение карты, приводим его к размеру Grid и
-    // меняем палитру на чёрно-белую
+    // Читаем изображение карты, приводим картинку к размеру сетки с учётом
+    // требуемого участка и масштаба, меняем палитру на чёрно-белую
 
     Wrapper wrapper;
 
-    std::ostringstream ss;
-    ss << SX << " x " << SY;
+    size_t imageSizeWidth = 0;
+    size_t imageSizeHeight = 0;
     try {
         wrapper.image.read( source.c_str() );
-        wrapper.image.zoom( ss.str() );
+        imageSizeWidth  = wrapper.image.size().width();
+        imageSizeHeight = wrapper.image.size().height();
+
         if (wrapper.image.colorSpace() != Magick::GRAYColorspace) {
-            wrapper.image.colorSpace( Magick::GRAYColorspace );
+            // @source http://www.imagemagick.org/Magick++/Image.html
+            wrapper.image.quantizeColorSpace( Magick::GRAYColorspace );
+            wrapper.image.quantizeColors( 256 );
+            wrapper.image.quantize();
         }
 
     } catch( const Magick::Exception& ex ) {
@@ -400,23 +404,107 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
     }
     
 
+
+    // До того, как изменить изображение, надо получить полную картину о карте
+    // высот: когда возьмём часть изображения (см. ниже), информация о высотах
+    // уже будет искажена
+    int fullVHMin = INT_MAX;
+    int fullVHMax = INT_MIN;
+    for (size_t j = 0; j < imageSizeHeight; ++j) {
+        for (size_t i = 0; i < imageSizeWidth; ++i) {
+            // высота представлена чёрно-белой градацией: R == G == B
+            wrapper.color = wrapper.image.pixelColor( i, j );
+            const int v = static_cast< int >( wrapper.color.redQuantum() );
+            if (v < fullVHMin) {
+                fullVHMin = v;
+            }
+            if (v > fullVHMax) {
+                fullVHMax = v;
+            }
+
+            // если полный диапазон, не имеет смысла прочёсывать изображение дальше
+            if ( (fullVHMin == 0) && (fullVHMax == 255) ) {
+                break;
+            }
+
+        } // for (int i
+
+    } // for (int j
+
+    assert( (fullVHMax >= fullVHMin)
+        && "Коэффициенты нормализации для полной карты высот не собраны." );
+
+    // равнина
+    const bool flat = (fullVHMax == fullVHMin);
+    const int fullVH = (flat ? 255 : (fullVHMax - fullVHMin)) + 1;
+
+
+    // Теперь можем оставить только нужную часть изображения
+    // @source http://imagemagick.org/script/command-line-processing.php?ImageMagick=3buive6jn1i4t9np2jitq25fa6#geometry
+    //std::ostringstream ssCrop;
+    Magick::Geometry cropGeometry( 0, 0, 0, 0 );
+    if (c != bm_t::undefinedCoord()) {
+        static const auto mc = bm_t::maxCoord();
+        const size_t kx = (imageSizeWidth  > OSX) ? (imageSizeWidth  / OSX) : 1;
+        const size_t ky = (imageSizeHeight > OSY) ? (imageSizeHeight / OSY) : 1;
+        const size_t sx = (c.x + mc.x) * imageSizeWidth  / OSX;
+        const size_t sy = (c.y + mc.y) * imageSizeHeight / OSY;
+        assert( ((sx + kx) < imageSizeWidth)
+            && "Область обрезки изображения по X за пределами границ изображения." );
+        assert( ((sy + ky) < imageSizeHeight)
+            && "Область обрезки изображения по Y за пределами границ изображения." );
+        //ssCrop << kx << "x" << ky << "+" << sx << "+" << sy;
+        cropGeometry = Magick::Geometry( kx, ky, sx, sy );
+    }
+
+    // изображение (или его часть) всегда приводится к размеру сетки
+    //std::ostringstream ssZoom;
+    //ssZoom << SX << "x" << SY;
+    const Magick::Geometry zoomGeometry( SX, SY );
+    
+    try {
+        if (cropGeometry.width() != 0) {
+            wrapper.image.crop( cropGeometry );
+            /* - @todo fine Убирать прозрачность. Строчки ниже - не помогают.
+            wrapper.image.opacity( 0 );
+            wrapper.image.syncPixels();
+            */
+#ifdef _DEBUG
+            // @test
+            const std::string file = "elevation-map-crop.png";
+            wrapper.image.write( file );
+#endif
+        }
+        wrapper.image.zoom( zoomGeometry );
+
+#ifdef _DEBUG
+        // @test
+        const std::string file = "elevation-map-crop-zoom.png";
+        wrapper.image.write( file );
+#endif
+
+    } catch( const Magick::Exception& ex ) {
+        const auto exWhat = ex.what();
+        assert( false && "Не удалось прочитать карту высот." );
+        return bm;
+    }
+
+    // размер изображения (в общем случае) изменён
+    imageSizeWidth  = wrapper.image.size().width();
+    imageSizeHeight = wrapper.image.size().height();
+
+
+
     // Проходим по полученному изображению и формируем сетку высот
 
     // Получаем коэффициенты для нормализации высот
     // Для правильных коэффициентов нужно просмотреть *всю карту*
     int vHMin = INT_MAX;
     int vHMax = INT_MIN;
-    const size_t imageSizeHeight = wrapper.image.size().height();
-    const size_t imageSizeWidth = wrapper.image.size().width();
     for (size_t j = 0; j < imageSizeHeight; ++j) {
         for (size_t i = 0; i < imageSizeWidth; ++i) {
             // высота представлена чёрно-белой градацией: R == G == B
             wrapper.color = wrapper.image.pixelColor( i, j );
-            /* - Палитра скорректирована выше.
-            assert( ( (color.redQuantum() == color.greenQuantum())
-                   && (color.redQuantum() == color.blueQuantum()) )
-                && "Изображение не в градациях серого: возможны искажения при формировании карты высот." );
-            */
             const int v = static_cast< int >( wrapper.color.redQuantum() );
             if (v < vHMin) {
                 vHMin = v;
@@ -427,37 +515,57 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
 
         } // for (int i
 
+        // если получен полный диапазон, не имеет смысла дальше прочёсывать изображение
+        if ( (vHMin == 0) && (vHMax == 255) ) {
+            break;
+        }
+
     } // for (int j
 
-    assert( (vHMax >= vHMin) && "Коэффициенты нормализации не собраны." );
+    assert( (vHMax >= vHMin)
+        && "Коэффициенты нормализации для части карты высот не собраны." );
 
-    // равнина
-    const bool flat = (vHMax == vHMin);
     const int vH = (flat ? 255 : (vHMax - vHMin)) + 1;
 
     // Масштаб картинки по осям, пкс / км
     const float scaleX =
-        scaleXY * static_cast< float >( SX ) / static_cast< float >( SY );
+        scaleXY * static_cast< float >( OSX ) / static_cast< float >( OSY );
     const float scaleY =
-        scaleXY * static_cast< float >( SY ) / static_cast< float >( SX );
-    const float scaleZ =
+        scaleXY * static_cast< float >( OSY ) / static_cast< float >( OSX );
+    float scaleZ =
         static_cast< float >( vH ) / static_cast< float >(hMax - hMin);
+    if (c != bm_t::undefinedCoord()) {
+        // декларированная координата означает, что нам надо брать часть
+        // карты - значит, детализация увеличивается в OSZ раз.
+        scaleZ *= static_cast< float >( OSZ );
+    }
 
     const typelib::coordInt_t S( SX, SY, SZ );
     const typelib::coord_t inOneG = sizeGrid();
     const typelib::coordInt_t maxCoord = bm_t::maxCoord();
     assert( ((maxCoord * 2 + 1) == S)
-        && "Сетка не согласована с координантами." );
+        && "Сетка карты высот не согласована с координатами." );
 
     // Коэффициент для корректировки согласно масштабу
     const float kX = scaleXY / scaleX;
     const float kY = scaleXY / scaleY;
+    /*
+    const float kZ =
+        (static_cast< float >( vH ) / static_cast< float >( fullVH ))
+      * scaleXY / scaleZ;
+    */
     const float kZ = scaleXY / scaleZ;
 
     // Где, с учётом масштаба и высоты, у нас будет "пол" карты высот
-    const int floorZ = -static_cast< int >(
+    int floorZ = -static_cast< int >(
         static_cast< float >( maxCoord.z ) * kZ
     );
+    // пол требует корректировки при частичном формировании карты высот
+    if (floorZ < bm_t::minCoord().z) {
+        floorZ = bm_t::minCoord().z;
+    }
+    assert( typelib::between( floorZ, bm_t::minCoord().z, bm_t::maxCoord().z )
+        && "Пол карты высот лежит вне Z-границ карты." );
 
 
     // Собираем поверхность: пробегаем по сетке XY
@@ -486,11 +594,25 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
                 - 1
                 // высоту надо скорректировать по масштабу картинки
             ) * kZ;
-            const int z = static_cast< int >( tz );
+            int z = static_cast< int >( tz );
+
+            // при выборе части карты высот, не всякая высота попадает
+            // в область...
+            if (z < bm_t::minCoord().z) {
+                // ...пропускаем
+                continue;
+            }
+            if (z > bm_t::maxCoord().z) {
+                // ...заполняем
+                z = bm_t::maxCoord().z;
+            }
 
             // Формируем бит-карту
 #ifdef _DEBUG
             if ( !bm.inside( x, y, z ) ) {
+                bool test = true;
+            }
+            if (h != 128) {
                 bool test = true;
             }
             assert( bm.inside( x, y, z )
@@ -583,7 +705,7 @@ void siu::shape::ElevationMap< SX, SY, SZ >::sizeImage(
 
     Magick::InitializeMagick( nullptr );
 
-    // Читаем изображение карты и приводим его к размеру Grid
+    // Читаем изображение карты и приводим его к размеру сетки
     Wrapper wrapper;
 
     try {

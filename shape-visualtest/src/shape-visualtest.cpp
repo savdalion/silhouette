@@ -8,6 +8,8 @@
 #include <mapcontent3d/InverseFilterMap.h>
 #include <mapcontent3d/NeightbourFilterMap.h>
 #include <mapcontent3d/OutlineFilterMap.h>
+#include <coord.h>
+#include <size.h>
 #include <io/VTKVisual.h>
 #include <io/SurfaceVTKVisual.h>
 
@@ -198,29 +200,40 @@ int main( int argc, char** argv ) {
     // картинка "mars/b/gray-elevation.png" протяжённостью 400 пкс или ~200 км
     // (согласно масштабам Google Earth)
     // @source http://google.com/mars/#lat=-38.220919&lon=97.690429&zoom=7
-    const double scaleXY = 200.0 / 400.0;
+    // квадратная картинка
+    const size_t sizeImage = 400;
+    const double scaleXY = 200.0 / static_cast< double>( sizeImage );
     // @todo Отрабатывать момент, когда размер по Z превышает размеры XY.
     const double hMin = -10.0;
     const double hMax = 20.0;
 
-    // верхний слой
+    // верхний слой, всё изображение карты высот
     sbm1_t a;
-    a << ElevationMap< SX1, SY1, SZ1 >( source, scaleXY, hMin, hMax, true );
+    a << ElevationMap< SX1, SY1, SZ1 >(
+        source, scaleXY, hMin, hMax, true
+    );
 
-    // нижний слой: *каждая* ячейка верхнего слоя содержит SX2 * SY2 * SZ2 ячеек нижнего;
-    // два слоя содержат (SX2 * SY2 * SZ2) * (SX1 * SY1 * SZ1) ячеек
+    // нижний слой, часть изображения карты высот
+    // *каждая* ячейка верхнего слоя содержит SX2 * SY2 * SZ2 ячеек нижнего, поэтому:
+    //   - два слоя содержат (SX2 * SY2 * SZ2) * (SX1 * SY1 * SZ1) ячеек
+    //   - нижний слой в (SX2, SY2, SZ2) раз подробнее верхнего
     sbm2_t b;
-    b << a;
+    // указываем ячейку на верхнем слое, которую хотим отразить в нижнем
+    // @todo Добавить правильное формирование частичной карты высот в зависимости от указанной высоты/глубины.
+    const typelib::coordInt_t cA( 0, 0, 0 );
+    // рассчитываем смещение и размер области в изобр.-источнике карты высот
+    const typelib::coordInt_t shiftB = cA + sbm2_t::bm_t::maxCoord();
+    const typelib::psizeInt_t sizeB( sizeImage / SX2,  sizeImage / SY2,  0u );
+    b << ElevationMap< SX1, SY1, SZ1 >(
+        source, scaleXY, hMin, hMax, true,
+        shiftB, sizeB
+    );
 
     // получаем образ верхнего слоя
     sbm1_t::bm_t bmA = a.draw();
 
     // получаем образ нижнего слоя
-    // (требуются координаты ячейки в слое 'a')
-    // @todo Не работает. Исправить.
-    sbm2_t::bm_t bmB = b.draw( 0, 0, 0 );
-    //sbm2_t::bm_t bmB = b.draw( sbm2_t::bm_t::minCoord() );
-    //sbm2_t::bm_t bmB = b.draw( 0, 0, 10 );
+    sbm2_t::bm_t bmB = b.draw();
 
 
 
@@ -280,8 +293,8 @@ int main( int argc, char** argv ) {
     o[ "size-point" ] = 1;
     o[ "show-corner" ] = true;
     o[ "show-axes" ] = true;
-    //o[ "rgba" ] = 0x00000000;
-    o[ "rgba" ] = 0xFFFFFFFF;
+    o[ "rgba" ] = 0x00000000;
+    //o[ "rgba" ] = 0xFFFFFFFF;
 
 #if 0
     io::VTKVisual visualA( o );

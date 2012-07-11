@@ -172,10 +172,7 @@ inline Ellipsoid< SX, SY, SZ >::~Ellipsoid() {
 
 
 template< size_t SX, size_t SY, size_t SZ >
-inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator()(
-    const typelib::coordInt_t& c,
-    size_t OSX, size_t OSY, size_t OSZ
-) {
+inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator()() {
     /* нормализованный размер
     const float normalRX = rx / rMax;
     const float normalRY = ry / rMax;
@@ -242,6 +239,16 @@ inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator(
 template< size_t SX, size_t SY, size_t SZ >
 inline typelib::coord_t Ellipsoid< SX, SY, SZ >::sizeMax() const {
     return typelib::coord_t( rx, ry, rz ) * 2.0f;
+}
+
+
+
+
+
+
+template< size_t SX, size_t SY, size_t SZ >
+inline typename Shape< SX, SY, SZ >::Ptr  Ellipsoid< SX, SY, SZ >::clone() const {
+    return Ellipsoid< SX, SY, SZ >::Ptr( new Ellipsoid< SX, SY, SZ >( *this ) );
 }
 
 

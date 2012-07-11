@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shape/Shape.h"
 #include "shape/ElevationMap.h"
 #include <mapcontent3d/BitMap.h>
 #include <coord.h>
@@ -46,57 +47,30 @@ public:
 
 
     /**
-    * @return —формированна€ по заданной координате битова€ карта.
-    *         Ѕиткарта верхнего уровн€ может быть сформирована без указани€
-    *         координаты (у верхней биткарты - одна координата (0; 0; 0) ).
+    * @return —формированна€ битова€ карта.
     */
     bm_t const& draw() const;
-    bm_t const& draw( int x, int y, int z ) const;
-    bm_t const& draw( const typelib::coordInt_t& c ) const;
 
 
 
     /**
-    * »сточником м-биткарты становитс€ карта высот.
+    * »сточником м-биткарты становитс€ указанна€ форма: карта высот,
+    * эллипосид, биткарта и т.п..
     */
     template< size_t OSX, size_t OSY, size_t OSZ >
-    ScaleBitMap& operator<<( const typename shape::ElevationMap< OSX, OSY, OSZ >& source );
-
-
-
-    /**
-    * »сточником м-биткарты становитс€ друга€ биткарта (уровнем выше).
-    */
-    template< size_t OSX, size_t OSY, size_t OSZ >
-    ScaleBitMap& operator<<( const typename ScaleBitMap< OSX, OSY, OSZ >& source );
+    ScaleBitMap& operator<<( const typename shape::Shape< OSX, OSY, OSZ >& source );
 
 
 
 
     /**
-    * @return —сылка на источники, которыми инициирована эта м-биткарта.
+    * @return —сылка на форму, которой инициирована эта м-биткарта.
     */
     inline shape_t const& shape() const {
         return mShape;
     }
 
-    inline scaleBitMap_t const& scaleBitMap() const {
-        return mScaleBitMap;
-    }
 
-
-
-
-
-private:
-    /**
-    * ¬спомогательные методы дл€ public draw().
-    */
-    template< size_t OSX, size_t OSY, size_t OSZ >
-    bm_t drawShape( const typename shape::ElevationMap< OSX, OSY, OSZ >::Ptr& ) const;
-
-    template< size_t OSX, size_t OSY, size_t OSZ >
-    bm_t drawParent( const typename ScaleBitMap< OSX, OSY, OSZ >::Ptr&, const typelib::coordInt_t& ) const;
 
 
 
@@ -108,18 +82,12 @@ protected:
     */
     shape_t mShape;
 
-    /**
-    * ћ-биткарта, уточн€юща€ эту м-биткарту.
-    */
-    scaleBitMap_t mScaleBitMap;
-
 
     /**
-    *  оордината и вычисленна€ дл€ неЄ битова€ карта (кеш).
+    * ¬ычисленна€ битова€ карта (кеш).
     *
     * @see draw()
     */
-    mutable typelib::coordInt_t c_;
     mutable bm_t bm_;
 
 };

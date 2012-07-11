@@ -55,15 +55,15 @@ public:
     *
     * Ёллипсоид строитс€ прохождением по *всем* €чейкам сетки G.
     */
-    virtual bm_t operator()(
-        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
-        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
-    );
+    virtual bm_t operator()();
 
 
     
     virtual typelib::coord_t sizeMax() const;
+    
 
+
+    virtual typename Shape::Ptr clone() const;
 
 };
 

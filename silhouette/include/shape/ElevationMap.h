@@ -66,6 +66,14 @@ public:
     */
     const bool fill;
 
+    /**
+    * Верхний левый угол и размер области, которая будет учтена в 'source'.
+    */
+    const typelib::coordInt_t shiftArea;
+    const typelib::psizeInt_t sizeArea;
+
+
+
 
 public:
     /**
@@ -77,7 +85,9 @@ public:
         const std::string& source,
         T scaleXY,
         T hMin, T hMax,
-        bool fill
+        bool fill,
+        const typelib::coordInt_t& shiftArea = bm_t::undefinedCoord(),
+        const typelib::psizeInt_t& sizeArea = typelib::psizeInt_t::ONE()
     );
 
 
@@ -91,16 +101,16 @@ public:
     /**
     * @virtual Shape
     */
-    virtual bm_t operator()(
-        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
-        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
-    );
+    virtual bm_t operator()();
 
 
 
 
     virtual typelib::coord_t sizeMax() const;
 
+
+
+    virtual typename Shape::Ptr clone() const;
 
 
 

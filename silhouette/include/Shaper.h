@@ -37,13 +37,9 @@ public:
     /**
     * @return Форма в виде облака точек (битовой карты).
     */
-    inline typename shape::Shape< SX, SY, SZ >::bm_t draw(
-        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
-        // масштаб задаём, когда хотим получить увеличенную часть формы
-        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
-    ) const {
+    inline typename shape::Shape< SX, SY, SZ >::bm_t draw() const {
 
-        const auto bm = ( *functor )( c, OSX, OSY, OSZ );
+        const auto bm = ( *functor )();
 
         // @test
         std::cout << "Points in " << typeid( *functor ).name() << " is " << bm.count() << std::endl;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coord.h>
+#include <size.h>
 #include <mapcontent3d/BitMap.h>
 
 
@@ -56,11 +57,7 @@ public:
     /**
     * Создаёт битовую карту.
     */
-    virtual bm_t operator()(
-        const typelib::coordInt_t& c = bm_t::undefinedCoord(),
-        // масштаб задаём, когда хотим получить увеличенную часть формы
-        size_t OSX = SX, size_t OSY = SY, size_t OSZ = SZ
-    ) = 0;
+    virtual bm_t operator()() = 0;
 
 
 
@@ -138,6 +135,11 @@ public:
             || ( (wz < areaMin.z) || (wz > areaMax.z) )
         ;
     }
+
+
+
+
+    virtual typename Shape::Ptr clone() const = 0;
 
 
 

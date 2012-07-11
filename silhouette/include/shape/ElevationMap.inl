@@ -8,7 +8,9 @@ inline ElevationMap< SX, SY, SZ >::ElevationMap(
     const std::string& source,
     T scaleXY,
     T hMin, T hMax,
-    bool fill
+    bool fill,
+    const typelib::coordInt_t& shiftArea,
+    const typelib::psizeInt_t& sizeArea
 ) :
     source( source ),
     scaleXY( static_cast< float >( scaleXY ) ),
@@ -16,6 +18,8 @@ inline ElevationMap< SX, SY, SZ >::ElevationMap(
     hMax( static_cast< float >( hMax ) ),
     hReal( static_cast< float >( hMax - hMin ) ),
     fill( fill ),
+    shiftArea( shiftArea ),
+    sizeArea( sizeArea ),
     // размер изображения: необходимо для работы метода size()
     sizeImage_( std::make_pair( 0, 0 ) )
 {
@@ -26,6 +30,10 @@ inline ElevationMap< SX, SY, SZ >::ElevationMap(
         && "Не указан источник для формирования карты высот." );
     assert( (hMin <= hMax)
         && "Минимальная высота не может превышать максимальную." );
+    assert( ( (shiftArea == bm_t::undefinedCoord()) || (shiftArea >= typelib::coordInt_t::ZERO()) )
+        && "Смещение области карты высот должно задаваться положительными координатами." );
+    assert( ( (sizeArea.sx > 0) && (sizeArea.sy > 0) )
+        && "Размер области должен быть задан." );
 }
 
 
@@ -366,10 +374,7 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
 
 template< size_t SX, size_t SY, size_t SZ >
-typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< SX, SY, SZ >::operator()(
-    const typelib::coordInt_t& c,
-    size_t OSX, size_t OSY, size_t OSZ
-) {
+typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()() {
     // Самый простой способ - привести изображение к размеру Grid: т.о.
     // мы без лишних хлопот получим хорошо усреднённую карту высот
 
@@ -406,8 +411,8 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
 
 
     // До того, как изменить изображение, надо получить полную картину о карте
-    // высот: когда возьмём часть изображения (см. ниже), информация о высотах
-    // уже будет искажена
+    // высот: когда возьмём часть изображения (см. shiftArea и sizeArea),
+    // информация о высотах будет искажена
     int fullVHMin = INT_MAX;
     int fullVHMax = INT_MIN;
     for (size_t j = 0; j < imageSizeHeight; ++j) {
@@ -422,12 +427,12 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
                 fullVHMax = v;
             }
 
-            // если полный диапазон, не имеет смысла прочёсывать изображение дальше
-            if ( (fullVHMin == 0) && (fullVHMax == 255) ) {
-                break;
-            }
-
         } // for (int i
+
+        // если полный диапазон, не имеет смысла прочёсывать изображение дальше
+        if ( (fullVHMin == 0) && (fullVHMax == 255) ) {
+            break;
+        }
 
     } // for (int j
 
@@ -441,31 +446,24 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
 
     // Теперь можем оставить только нужную часть изображения
     // @source http://imagemagick.org/script/command-line-processing.php?ImageMagick=3buive6jn1i4t9np2jitq25fa6#geometry
-    //std::ostringstream ssCrop;
+    const bool hasArea = (shiftArea != bm_t::undefinedCoord());
     Magick::Geometry cropGeometry( 0, 0, 0, 0 );
-    if (c != bm_t::undefinedCoord()) {
-        static const auto mc = bm_t::maxCoord();
-        const size_t kx = (imageSizeWidth  > OSX) ? (imageSizeWidth  / OSX) : 1;
-        const size_t ky = (imageSizeHeight > OSY) ? (imageSizeHeight / OSY) : 1;
-        const size_t sx = (c.x + mc.x) * imageSizeWidth  / OSX;
-        const size_t sy = (c.y + mc.y) * imageSizeHeight / OSY;
-        assert( ((sx + kx) < imageSizeWidth)
+    if ( hasArea ) {
+        assert( ((shiftArea.x + sizeArea.sx) < static_cast< int >( imageSizeWidth ))
             && "Область обрезки изображения по X за пределами границ изображения." );
-        assert( ((sy + ky) < imageSizeHeight)
+        assert( ((shiftArea.y + sizeArea.sy) < static_cast< int >( imageSizeHeight ))
             && "Область обрезки изображения по Y за пределами границ изображения." );
-        //ssCrop << kx << "x" << ky << "+" << sx << "+" << sy;
-        cropGeometry = Magick::Geometry( kx, ky, sx, sy );
+        cropGeometry =
+            Magick::Geometry( shiftArea.x, shiftArea.y,  sizeArea.sx, sizeArea.sy );
     }
 
     // изображение (или его часть) всегда приводится к размеру сетки
-    //std::ostringstream ssZoom;
-    //ssZoom << SX << "x" << SY;
     const Magick::Geometry zoomGeometry( SX, SY );
     
     try {
-        if (cropGeometry.width() != 0) {
+        if ( hasArea ) {
             wrapper.image.crop( cropGeometry );
-            /* - @todo fine Убирать прозрачность. Строчки ниже - не помогают.
+            /* - @todo fine Убирать прозрачность. Код ниже - не помогает.
             wrapper.image.opacity( 0 );
             wrapper.image.syncPixels();
             */
@@ -498,7 +496,6 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
     // Проходим по полученному изображению и формируем сетку высот
 
     // Получаем коэффициенты для нормализации высот
-    // Для правильных коэффициентов нужно просмотреть *всю карту*
     int vHMin = INT_MAX;
     int vHMax = INT_MIN;
     for (size_t j = 0; j < imageSizeHeight; ++j) {
@@ -527,18 +524,16 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
 
     const int vH = (flat ? 255 : (vHMax - vHMin)) + 1;
 
+    // Высота области будет пропорционально отличаться от высоты, заданной для
+    // целого изображения
+    const float kh = static_cast< float >( vH ) / static_cast< float >( fullVH );
+    const float khMax = kh * hMax;
+    const float khMin = kh * hMin;
+
     // Масштаб картинки по осям, пкс / км
-    const float scaleX =
-        scaleXY * static_cast< float >( OSX ) / static_cast< float >( OSY );
-    const float scaleY =
-        scaleXY * static_cast< float >( OSY ) / static_cast< float >( OSX );
-    float scaleZ =
-        static_cast< float >( vH ) / static_cast< float >(hMax - hMin);
-    if (c != bm_t::undefinedCoord()) {
-        // декларированная координата означает, что нам надо брать часть
-        // карты - значит, детализация увеличивается в OSZ раз.
-        scaleZ *= static_cast< float >( OSZ );
-    }
+    const float scaleX = scaleXY;
+    const float scaleY = scaleXY;
+    const float scaleZ = static_cast< float >( vH ) / (khMax - khMin);
 
     const typelib::coordInt_t S( SX, SY, SZ );
     const typelib::coord_t inOneG = sizeGrid();
@@ -560,10 +555,11 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
     int floorZ = -static_cast< int >(
         static_cast< float >( maxCoord.z ) * kZ
     );
-    // пол требует корректировки при частичном формировании карты высот
+    /* - ? пол требует корректировки при частичном формировании карты высот
     if (floorZ < bm_t::minCoord().z) {
         floorZ = bm_t::minCoord().z;
     }
+    */
     assert( typelib::between( floorZ, bm_t::minCoord().z, bm_t::maxCoord().z )
         && "Пол карты высот лежит вне Z-границ карты." );
 
@@ -594,25 +590,11 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
                 - 1
                 // высоту надо скорректировать по масштабу картинки
             ) * kZ;
-            int z = static_cast< int >( tz );
-
-            // при выборе части карты высот, не всякая высота попадает
-            // в область...
-            if (z < bm_t::minCoord().z) {
-                // ...пропускаем
-                continue;
-            }
-            if (z > bm_t::maxCoord().z) {
-                // ...заполняем
-                z = bm_t::maxCoord().z;
-            }
+            const int z = static_cast< int >( tz );
 
             // Формируем бит-карту
 #ifdef _DEBUG
             if ( !bm.inside( x, y, z ) ) {
-                bool test = true;
-            }
-            if (h != 128) {
                 bool test = true;
             }
             assert( bm.inside( x, y, z )
@@ -645,7 +627,7 @@ typename siu::shape::ElevationMap< SX, SY, SZ >::bm_t siu::shape::ElevationMap< 
 
 
 template< size_t SX, size_t SY, size_t SZ >
-void siu::shape::ElevationMap< SX, SY, SZ >::sizeImage(
+void ElevationMap< SX, SY, SZ >::sizeImage(
     std::pair< size_t, size_t >* rSizeImage,
     const std::string& source
 ) {
@@ -724,6 +706,16 @@ void siu::shape::ElevationMap< SX, SY, SZ >::sizeImage(
     const size_t b = geometry.height();
 
     *rSizeImage = std::make_pair( a, b );
+}
+
+
+
+
+
+
+template< size_t SX, size_t SY, size_t SZ >
+inline typename Shape< SX, SY, SZ >::Ptr  ElevationMap< SX, SY, SZ >::clone() const {
+    return ElevationMap< SX, SY, SZ >::Ptr( new ElevationMap< SX, SY, SZ >( *this ) );
 }
 
 

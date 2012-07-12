@@ -1,7 +1,7 @@
 #pragma once
 
-#include <mapcontent3d/BitMap.h>
-#include <other.h>
+#include <typelib/include/mapcontent3d/BitMap.h>
+#include <typelib/include/other.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>

@@ -1,17 +1,17 @@
 #include "../include/StdAfx.h"
 #include "../include/configure.h"
-#include <mapcontent3d/BitMap.h>
-#include "ScaleBitMap.h"
-#include <Shaper.h>
-#include <shape/Ellipsoid.h>
-#include <shape/ElevationMap.h>
-#include <mapcontent3d/InverseFilterMap.h>
-#include <mapcontent3d/NeightbourFilterMap.h>
-#include <mapcontent3d/OutlineFilterMap.h>
-#include <coord.h>
-#include <size.h>
-#include <io/VolumeVTKVisual.h>
-#include <io/SurfaceVTKVisual.h>
+#include <silhouette/include/ScaleBitMap.h>
+#include <silhouette/include/Shaper.h>
+#include <silhouette/include/shape/Ellipsoid.h>
+#include <silhouette/include/shape/ElevationMap.h>
+#include <typelib/include/mapcontent3d/BitMap.h>
+#include <typelib/include/mapcontent3d/InverseFilterMap.h>
+#include <typelib/include/mapcontent3d/NeightbourFilterMap.h>
+#include <typelib/include/mapcontent3d/OutlineFilterMap.h>
+#include <typelib/include/coord.h>
+#include <typelib/include/size.h>
+#include <silhouette/include/io/VolumeVTKVisual.h>
+#include <silhouette/include/io/SurfaceVTKVisual.h>
 
 
 /**

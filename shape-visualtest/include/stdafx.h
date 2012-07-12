@@ -70,4 +70,4 @@
 #include <vtkCellArray.h>
 #include <vtkProperty.h>
 
-#include <coord.h>
+#include <typelib/include/coord.h>

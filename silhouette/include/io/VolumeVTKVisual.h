@@ -51,10 +51,10 @@ namespace siu {
 *
 * @source http://vtk.org
 */
-class VTKVisual {
+class VolumeVTKVisual {
 public:
     /**
-    * Тип для задания опций визаулизатору.
+    * Тип для задания опций визуализатору.
     */
     typedef typelib::json::Variant  option_t;
 
@@ -63,11 +63,11 @@ public:
     /**
     * Открывает окно для визуализации.
     */
-    VTKVisual( const io::VTKVisual::option_t& option );
+    VolumeVTKVisual( const io::VolumeVTKVisual::option_t& option );
 
 
 
-    virtual ~VTKVisual();
+    virtual ~VolumeVTKVisual();
 
 
 
@@ -77,7 +77,7 @@ public:
     * создаётся. Иначе, холст добавляется к текущему окну.
     */
     template< size_t SX, size_t SY, size_t SZ >
-    VTKVisual& operator<<( const typename typelib::BitMap< SX, SY, SZ >&  bm );
+    VolumeVTKVisual& operator<<( const typename typelib::BitMap< SX, SY, SZ >&  bm );
 
 
 
@@ -119,4 +119,4 @@ private:
 
 
 
-#include "VTKVisual.inl"
+#include "VolumeVTKVisual.inl"

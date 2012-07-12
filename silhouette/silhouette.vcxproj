@@ -71,7 +71,7 @@
   <ItemGroup>
     <ClInclude Include="include\configure.h" />
     <ClInclude Include="include\io\SurfaceVTKVisual.h" />
-    <ClInclude Include="include\io\VTKVisual.h" />
+    <ClInclude Include="include\io\VolumeVTKVisual.h" />
     <ClInclude Include="include\ScaleBitMap.h" />
     <ClInclude Include="include\Shaper.h" />
     <ClInclude Include="include\shape\ElevationMap.h" />
@@ -79,7 +79,7 @@
     <ClInclude Include="include\shape\Shape.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="include\io\VTKVisual.inl">
+    <None Include="include\io\VolumeVTKVisual.inl">
       <FileType>Document</FileType>
     </None>
     <None Include="include\ScaleBitMap.inl" />

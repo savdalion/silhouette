@@ -30,7 +30,7 @@
 
 
 
-// @todo fine Оставить в VTKVisual только один виртуальны метод.
+// @todo fine Оставить в VolumeVTKVisual только один виртуальны метод.
 
 
 namespace siu {
@@ -107,7 +107,7 @@ public:
         assert( false && "Не реализовано." );
 
 #if 0
-// - @todo Переписать на основании изменений VTKVisual.
+// - @todo Переписать на основании изменений VolumeVTKVisual.
         // Переводим полученный холст в формат VTK
         // @todo optimize http://vtk.1045678.n5.nabble.com/Filling-vtkPoints-and-vtkCellArray-fast-td1243607.html
 

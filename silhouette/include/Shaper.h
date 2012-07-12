@@ -29,6 +29,10 @@ public:
     }
 
 
+    inline Shaper( typename const shape::Shape< SX, SY, SZ >&  functor ) : functor( functor.clone() ) {
+    }
+
+
     virtual inline ~Shaper() {
     }
 

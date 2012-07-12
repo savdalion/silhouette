@@ -2,8 +2,8 @@ namespace siu {
     namespace io {
 
         
-inline VTKVisual::VTKVisual(
-    const io::VTKVisual::option_t& json
+inline VolumeVTKVisual::VolumeVTKVisual(
+    const io::VolumeVTKVisual::option_t& json
 ) :
     option( json ),
     renderer( vtkSmartPointer< vtkRenderer >::New() ),
@@ -39,7 +39,7 @@ inline VTKVisual::VTKVisual(
 
 
 
-inline VTKVisual::~VTKVisual() {
+inline VolumeVTKVisual::~VolumeVTKVisual() {
     // используются умные указатели, красота
 }
 
@@ -49,7 +49,7 @@ inline VTKVisual::~VTKVisual() {
 
 
 template< size_t SX, size_t SY, size_t SZ >
-inline VTKVisual& VTKVisual::operator<<(
+inline VolumeVTKVisual& VolumeVTKVisual::operator<<(
     const typename typelib::BitMap< SX, SY, SZ >&  bm
 ) {
     if ( bm.empty() ) {
@@ -77,7 +77,7 @@ inline VTKVisual& VTKVisual::operator<<(
     // @source http://vtk.1045678.n5.nabble.com/How-to-use-vtkRibbonFilter-to-show-a-scalar-field-td1237601.html
     auto data = vtkSmartPointer< vtkFloatArray >::New();
     data->Initialize();
-    data->SetName( "ElevationData" );
+    data->SetName( "BitMapData" );
     data->SetNumberOfComponents( 1 );
     data->SetNumberOfValues( bm.count() ); 
 
@@ -177,7 +177,7 @@ inline VTKVisual& VTKVisual::operator<<(
         mapper->SetLookupTable( lookupTable );
         mapper->SetScalarRange( edgeZ.first, edgeZ.second );
         mapper->ScalarVisibilityOn();
-        mapper->SelectColorArray( "ElevationData" );
+        mapper->SelectColorArray( "BitMapData" );
         mapper->SetScalarModeToUsePointFieldData();
         mapper->SetColorModeToMapScalars();
 
@@ -293,7 +293,7 @@ inline VTKVisual& VTKVisual::operator<<(
 
 
 
-inline void VTKVisual::wait() {
+inline void VolumeVTKVisual::wait() {
     auto renderWindowInteractor = vtkSmartPointer< vtkRenderWindowInteractor >::New();
     renderWindowInteractor->SetRenderWindow( renderWindow );
     renderer->ResetCamera();

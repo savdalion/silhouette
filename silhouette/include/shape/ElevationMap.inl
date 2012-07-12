@@ -30,7 +30,7 @@ inline ElevationMap< SX, SY, SZ >::ElevationMap(
         && "Не указан источник для формирования карты высот." );
     assert( (hMin <= hMax)
         && "Минимальная высота не может превышать максимальную." );
-    assert( ( (shiftArea == bm_t::undefinedCoord()) || (shiftArea >= typelib::coordInt_t::ZERO()) )
+    assert( ( shiftArea.undefined() || (shiftArea >= typelib::coordInt_t::ZERO()) )
         && "Смещение области карты высот должно задаваться положительными координатами." );
     assert( ( (sizeArea.sx > 0) && (sizeArea.sy > 0) )
         && "Размер области должен быть задан." );
@@ -446,7 +446,7 @@ typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()
 
     // Теперь можем оставить только нужную часть изображения
     // @source http://imagemagick.org/script/command-line-processing.php?ImageMagick=3buive6jn1i4t9np2jitq25fa6#geometry
-    const bool hasArea = (shiftArea != bm_t::undefinedCoord());
+    const bool hasArea = !shiftArea.undefined();
     Magick::Geometry cropGeometry( 0, 0, 0, 0 );
     if ( hasArea ) {
         assert( ((shiftArea.x + sizeArea.sx) < static_cast< int >( imageSizeWidth ))
@@ -533,7 +533,11 @@ typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()
     // Масштаб картинки по осям, пкс / км
     const float scaleX = scaleXY;
     const float scaleY = scaleXY;
+    /* - @todo Правильно?
     const float scaleZ = static_cast< float >( vH ) / (khMax - khMin);
+    */
+    const float scaleZ = (khMax - khMin) / static_cast< float >( imageSizeWidth )
+        * (static_cast< float >( SZ ) / static_cast< float >( SX ));
 
     const typelib::coordInt_t S( SX, SY, SZ );
     const typelib::coord_t inOneG = sizeGrid();
@@ -566,11 +570,11 @@ typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()
 
     // Собираем поверхность: пробегаем по сетке XY
     for (int y = -maxCoord.y; y <= maxCoord.y; ++y) {
-        const int py = (y + maxCoord.y) * kY;
+        const int py = static_cast< int >( (y + maxCoord.y) * kY );
         // Находим координаты внутри изображения карты высот
         // (изображение уже приведено к размеру сетки)
         for (int x = -maxCoord.x; x <= maxCoord.x; ++x) {
-            const int px = (x + maxCoord.x) * kX;
+            const int px = static_cast< int >( (x + maxCoord.x) * kX );
             // Получаем значение высоты в этой ячейке;
             // высота представлена чёрно-белой градацией: RGB всегда равны
             wrapper.color = wrapper.image.pixelColor( px, py );

@@ -30,9 +30,6 @@
     <ClInclude Include="include\io\SurfaceVTKVisual.h">
       <Filter>Заголовочные файлы\io</Filter>
     </ClInclude>
-    <ClInclude Include="include\io\VTKVisual.h">
-      <Filter>Заголовочные файлы\io</Filter>
-    </ClInclude>
     <ClInclude Include="include\shape\ElevationMap.h">
       <Filter>Заголовочные файлы\shape</Filter>
     </ClInclude>
@@ -45,11 +42,11 @@
     <ClInclude Include="include\ScaleBitMap.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="include\io\VolumeVTKVisual.h">
+      <Filter>Заголовочные файлы\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="include\io\VTKVisual.inl">
-      <Filter>Заголовочные файлы\io</Filter>
-    </None>
     <None Include="include\shape\ElevationMap.inl">
       <Filter>Заголовочные файлы\shape</Filter>
     </None>
@@ -58,6 +55,9 @@
     </None>
     <None Include="include\ScaleBitMap.inl">
       <Filter>Заголовочные файлы</Filter>
+    </None>
+    <None Include="include\io\VolumeVTKVisual.inl">
+      <Filter>Заголовочные файлы\io</Filter>
     </None>
   </ItemGroup>
 </Project>

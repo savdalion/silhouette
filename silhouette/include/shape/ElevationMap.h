@@ -86,7 +86,7 @@ public:
         T scaleXY,
         T hMin, T hMax,
         bool fill,
-        const typelib::coordInt_t& shiftArea = bm_t::undefinedCoord(),
+        const typelib::coordInt_t& shiftArea = typelib::coordInt_t::UNDEFINED(),
         const typelib::psizeInt_t& sizeArea = typelib::psizeInt_t::ONE()
     );
 

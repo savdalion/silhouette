@@ -10,7 +10,7 @@
 #include <mapcontent3d/OutlineFilterMap.h>
 #include <coord.h>
 #include <size.h>
-#include <io/VTKVisual.h>
+#include <io/VolumeVTKVisual.h>
 #include <io/SurfaceVTKVisual.h>
 
 
@@ -50,22 +50,23 @@ int main( int argc, char** argv ) {
 
     // Визуализируем холст средствами VTK > http://vtk.org
 /* - Переписано через json-параметризацию. См. ниже.
-    siu::io::VTKVisual< 700, 2, true, true >  visual;
+    siu::io::VolumeVTKVisual< 700, 2, true, true >  visual;
 */
 
-    io::VTKVisual::option_t o;
+    io::VolumeVTKVisual::option_t o;
     o[ "size-window" ] = 700;
     o[ "size-point" ] = 2;
     o[ "show-corner" ] = true;
     o[ "show-axes" ] = true;
     o[ "rgba" ] = 0x1111FFFF;
 
-    io::VTKVisual visual( o );
+    io::VolumeVTKVisual visual( o );
 
     visual << bm;
     visual.wait();
 }
 #endif
+
 
 
 
@@ -144,12 +145,12 @@ int main( int argc, char** argv ) {
     io::SurfaceVTKVisual< 700, 1, true, true >  visual;
 
 #else
-    io::VTKVisual< 700, 2, true, true, 0x00000000 >  visual;
-    //io::VTKVisual< 700, 2, true, true, 0xFFFFFFFF >  visual;
+    io::VolumeVTKVisual< 700, 2, true, true, 0x00000000 >  visual;
+    //io::VolumeVTKVisual< 700, 2, true, true, 0xFFFFFFFF >  visual;
 
 #endif
 */
-    io::VTKVisual::option_t o;
+    io::VolumeVTKVisual::option_t o;
     o[ "size-window" ] = 700;
     o[ "size-point" ] = 3;
     o[ "show-corner" ] = true;
@@ -157,7 +158,7 @@ int main( int argc, char** argv ) {
     o[ "rgba" ] = 0x00000000;
     //o[ "rgba" ] = 0xFFFFFFFF;
 
-    io::VTKVisual visual( o );
+    io::VolumeVTKVisual visual( o );
 
     visual << bm;
 
@@ -176,7 +177,7 @@ int main( int argc, char** argv ) {
     const size_t SY1 = 81;
     // т.к. высота много меньше размера поверхности, вводим "коэффициент для
     // наглядности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
-    const size_t clearness1 = 5;
+    const size_t clearness1 = 1;
     const size_t SZ1 = SX1 * clearness1;
     typedef ScaleBitMap< SX1, SY1, SZ1 >  sbm1_t;
 
@@ -283,12 +284,12 @@ int main( int argc, char** argv ) {
     io::SurfaceVTKVisual< 700, 1, true, true >  visual;
 
 #else
-    io::VTKVisual< 700, 2, true, true, 0x00000000 >  visual;
-    //io::VTKVisual< 700, 2, true, true, 0xFFFFFFFF >  visual;
+    io::VolumeVTKVisual< 700, 2, true, true, 0x00000000 >  visual;
+    //io::VolumeVTKVisual< 700, 2, true, true, 0xFFFFFFFF >  visual;
 
 #endif
 */
-    io::VTKVisual::option_t o;
+    io::VolumeVTKVisual::option_t o;
     o[ "size-window" ] = 700;
     o[ "size-point" ] = 1;
     o[ "show-corner" ] = true;
@@ -297,13 +298,13 @@ int main( int argc, char** argv ) {
     //o[ "rgba" ] = 0xFFFFFFFF;
 
 #if 0
-    io::VTKVisual visualA( o );
+    io::VolumeVTKVisual visualA( o );
     visualA << bmA;
     visualA.wait();
 #endif
 
 #if 1
-    io::VTKVisual visualB( o );
+    io::VolumeVTKVisual visualB( o );
     visualB << bmB;
     visualB.wait();
 #endif

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <typelib/include/coord.h>
-#include <typelib/include/size.h>
-#include <typelib/include/mapcontent3d/BitMap.h>
+#include <typelib/typelib.h>
 
 
 

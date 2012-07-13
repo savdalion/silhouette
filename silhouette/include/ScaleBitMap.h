@@ -2,8 +2,7 @@
 
 #include "shape/Shape.h"
 #include "shape/ElevationMap.h"
-#include <typelib/include/mapcontent3d/BitMap.h>
-#include <typelib/include/coord.h>
+#include <typelib/typelib.h>
 
 
 namespace siu {

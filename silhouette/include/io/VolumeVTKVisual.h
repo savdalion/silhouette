@@ -1,8 +1,6 @@
 #pragma once
 
-#include <typelib/include/mapcontent3d/BitMap.h>
-#include <typelib/include/other.h>
-#include <typelib/include/json.h>
+#include <typelib/typelib.h>
 
 #include <vtkPointSource.h>
 #include <vtkPolyData.h>
@@ -63,7 +61,7 @@ public:
     /**
     * Открывает окно для визуализации.
     */
-    VolumeVTKVisual( const io::VolumeVTKVisual::option_t& option );
+    VolumeVTKVisual( const option_t& option );
 
 
 
@@ -82,6 +80,13 @@ public:
 
 
     /**
+    * Обновляет опции визуализатора.
+    */
+    VolumeVTKVisual& operator<<( const option_t& );
+
+
+
+    /**
     * Ожидает закрытия окна визуализации.
     */
     void wait();
@@ -94,7 +99,7 @@ private:
     /**
     * Опции визуализатора.
     */
-    typelib::json::Variant option;
+    option_t mOption;
 
 
     vtkSmartPointer< vtkRenderer >  renderer;

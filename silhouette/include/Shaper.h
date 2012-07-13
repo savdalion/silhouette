@@ -1,7 +1,7 @@
 #pragma once
 
 #include "shape/Shape.h"
-#include <typelib/include/coord.h>
+#include <typelib/typelib.h>
 
 
 namespace siu {

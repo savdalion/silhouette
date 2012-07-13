@@ -3,16 +3,16 @@ namespace siu {
 
         
 inline VolumeVTKVisual::VolumeVTKVisual(
-    const io::VolumeVTKVisual::option_t& json
+    const option_t& json
 ) :
-    option( json ),
+    mOption( json ),
     renderer( vtkSmartPointer< vtkRenderer >::New() ),
     renderWindow( vtkSmartPointer< vtkRenderWindow >::New() ),
     hasAxes( false )
 {
     renderWindow->AddRenderer( renderer );
 
-    const size_t sizeWindow = option[ "size-window" ];
+    const size_t sizeWindow = mOption[ "size-window" ];
     renderWindow->SetSize( sizeWindow, sizeWindow );
 
     // Настраиваем камеру
@@ -133,7 +133,7 @@ inline VolumeVTKVisual& VolumeVTKVisual::operator<<(
     // цвет точек
 
     // задан конкретный цвет
-    const size_t rgba = option[ "rgba" ];
+    const size_t rgba = mOption[ "rgba" ];
     const float r = static_cast< float >( (rgba >> 24) & 0x000000ff ) / 255.0f;
     const float g = static_cast< float >( (rgba >> 16) & 0x000000ff ) / 255.0f;
     const float b = static_cast< float >( (rgba >> 8)  & 0x000000ff ) / 255.0f;
@@ -188,7 +188,7 @@ inline VolumeVTKVisual& VolumeVTKVisual::operator<<(
  
     auto contentActor = vtkSmartPointer< vtkActor >::New();
     contentActor->SetMapper( mapper );
-    const size_t sizePoint = option[ "size-point" ];
+    const size_t sizePoint = mOption[ "size-point" ];
     contentActor->GetProperty()->SetPointSize( sizePoint );
     if ( !gradientColor ) {
         contentActor->GetProperty()->SetColor( r, g, b );
@@ -200,7 +200,7 @@ inline VolumeVTKVisual& VolumeVTKVisual::operator<<(
 
     // Отмечаем границы холста
     auto cornerPoints = vtkSmartPointer< vtkPoints >::New();
-    const bool showCorner = option[ "show-corner" ];
+    const bool showCorner = mOption[ "show-corner" ];
     if ( showCorner ) {
         auto cornerVertices = vtkSmartPointer< vtkCellArray >::New();
         const size_t NP = 1 + 8;
@@ -242,7 +242,7 @@ inline VolumeVTKVisual& VolumeVTKVisual::operator<<(
 
 
     // Рисуем оси
-    const bool showAxes = option[ "show-axes" ];
+    const bool showAxes = mOption[ "show-axes" ];
     if ( !hasAxes && showAxes ) {
         // Оси рисуем после визуализации, т.к. процесс их отрисовки длится неск. секунд.
         /*
@@ -289,6 +289,23 @@ inline VolumeVTKVisual& VolumeVTKVisual::operator<<(
     return *this;
 }
 
+
+
+
+
+
+inline VolumeVTKVisual& VolumeVTKVisual::operator<<( const option_t& json ) {
+
+    mOption = json;
+
+    const size_t sizeWindow = mOption[ "size-window" ];
+    renderWindow->SetSize( sizeWindow, sizeWindow );
+
+    renderer->ResetCamera();
+    renderWindow->Render();
+
+    return *this;
+}
 
 
 

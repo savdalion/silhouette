@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\configure.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
     <ClInclude Include="include\Shaper.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
@@ -45,6 +42,15 @@
     <ClInclude Include="include\io\VolumeVTKVisual.h">
       <Filter>Заголовочные файлы\io</Filter>
     </ClInclude>
+    <ClInclude Include="configure.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="silhouette.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="include\shape\Sphere.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\shape\ElevationMap.inl">
@@ -58,6 +64,9 @@
     </None>
     <None Include="include\io\VolumeVTKVisual.inl">
       <Filter>Заголовочные файлы\io</Filter>
+    </None>
+    <None Include="include\shape\Sphere.inl">
+      <Filter>Заголовочные файлы</Filter>
     </None>
   </ItemGroup>
 </Project>

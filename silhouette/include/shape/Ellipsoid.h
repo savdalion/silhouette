@@ -9,6 +9,8 @@ namespace siu {
 /**
 * Эллипосид.
 *
+* @see Sphere
+*
 * @template См. Shape.
 */
 template< size_t SX, size_t SY, size_t SZ >
@@ -35,13 +37,22 @@ public:
     */
     const bool fill;
 
+    /**
+    * Коэффициент масштабирования. Благодаря ему, размер эллипсоид будет
+    * изменён перед формированием биткарты. При (scale == 1.0) эллипосид
+    * вписывается в размер SX x SY x SZ.
+    * Допустимо указывать значение > 1.0.
+    */
+    const float scale;
+
 
 
 public:
-    template< typename T >
+    template< typename T, typename S >
     Ellipsoid(
         T rx, T ry, T rz,
-        bool fill
+        bool fill,
+        S scale = 1.0f
     );
 
 

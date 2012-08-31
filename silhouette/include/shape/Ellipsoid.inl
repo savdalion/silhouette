@@ -3,18 +3,22 @@ namespace siu {
 
 
 template< size_t SX, size_t SY, size_t SZ >
-template< typename T >
+template< typename T, typename S >
 inline Ellipsoid< SX, SY, SZ >::Ellipsoid(
     T rx, T ry, T rz,
-    bool fill
+    bool fill,
+    S scale
 ) :
     rx( static_cast< float >( rx ) ),
     ry( static_cast< float >( ry ) ),
     rz( static_cast< float >( rz ) ),
-    fill( fill )
+    fill( fill ),
+    scale( static_cast< float >( scale ) )
 {
     assert( ( (rx > 0.0f) && (ry > 0.0f) && (rz > 0.0f) )
         && "Все три радиуса должны быть больше 0." );
+    assert( (scale > 0.0f)
+        && "Масштаб эллипсоида должен быть больше 0." );
 }
 
 
@@ -184,12 +188,6 @@ inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator(
     const typelib::coordInt_t maxCoord = bm_t::maxCoord();
     const typelib::coordInt_t minCoord = -maxCoord;
 
-    // масштаб будет изменён, если указана не пустая область
-    if ( (areaMin - areaMax) != typelib::coord_t::ZERO() ) {
-        // (!) Коряво получается, когда в сетку требуется получить лишь часть фигуры.
-        assert( false && "@todo Не реализовано." );
-    }
-
     // смещение относительно центра
     const typelib::coordInt_t shift( 0, 0, 0 );
 
@@ -197,14 +195,14 @@ inline typename Ellipsoid< SX, SY, SZ >::bm_t Ellipsoid< SX, SY, SZ >::operator(
 
     const typelib::coord_t sizeG = sizeGrid();
     const float maxSizeG2 = sizeG.max() * sizeG.max();
-    const float rx2 = rx * rx / maxSizeG2;
-    const float ry2 = ry * ry / maxSizeG2;
-    const float rz2 = rz * rz / maxSizeG2;
-    for (int z = minCoord.z; z <= maxCoord.z; ++z) {
+    const float rx2 = rx * scale * rx * scale / maxSizeG2;
+    const float ry2 = ry * scale * ry * scale / maxSizeG2;
+    const float rz2 = rz * scale * rz * scale / maxSizeG2;
+    for (int z = minCoord.z * scale; z <= maxCoord.z * scale; ++z) {
         const float tz = static_cast< float >( z * z ) / rz2;
-        for (int y = minCoord.y; y <= maxCoord.y; ++y) {
+        for (int y = minCoord.y * scale; y <= maxCoord.y * scale; ++y) {
             const float ty = static_cast< float >( y * y ) / ry2;
-            for (int x = minCoord.x; x <= maxCoord.x; ++x) {
+            for (int x = minCoord.x * scale; x <= maxCoord.x * scale; ++x) {
                 /* - @todo Контролировать области. См. @todo выше.
                 if ( outside( x, y, z, areaMin, areaMax ) ) {
                     continue;

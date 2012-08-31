@@ -172,21 +172,6 @@ int main( int argc, char** argv ) {
 
 #ifdef SCALE_ELEVATION_MAP_SHAPE_SIU_VISUALTEST
 {
-    // @todo (!) Не корректно масштабирует при SX != SY и не пропорциональной исходной картинке.
-    const size_t SX1 = 81;
-    const size_t SY1 = 81;
-    // т.к. высота много меньше размера поверхности, вводим "коэффициент для
-    // наглядности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
-    const size_t clearness1 = 1;
-    const size_t SZ1 = SX1 * clearness1;
-    typedef ScaleBitMap< SX1, SY1, SZ1 >  sbm1_t;
-
-    const size_t SX2 = SX1;
-    const size_t SY2 = SY1;
-    const size_t clearness2 = clearness1;
-    const size_t SZ2 = SX2 * clearness2;
-    typedef ScaleBitMap< SX2, SY2, SZ2 >  sbm2_t;
-
     //const std::string source = PATH_MEDIA + "test/a/gray-center-cavity.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-center-hill.png";
     //const std::string source = PATH_MEDIA + "test/a/gray-max.png";
@@ -209,12 +194,31 @@ int main( int argc, char** argv ) {
     const double hMax = 20.0;
 
     // верхний слой, всё изображение карты высот
+    // @todo (!) Не корректно масштабирует при SX != SY и не пропорциональной исходной картинке.
+    const size_t SX1 = 81;
+    const size_t SY1 = 81;
+    // т.к. высота много меньше размера поверхности, вводим "коэффициент для
+    // наглядности"; чтобы увидеть реальный масштаб, пишем "clearness = 1".
+    const size_t clearness1 = 3;
+    const size_t SZ1 = SX1 * clearness1;
+    typedef ScaleBitMap< SX1, SY1, SZ1 >  sbm1_t;
+
     sbm1_t a;
     a << ElevationMap< SX1, SY1, SZ1 >(
         source, scaleXY, hMin, hMax, true
     );
 
+    // получаем образ верхнего слоя
+    sbm1_t::bm_t bmA = a.draw();
+
+
     // нижний слой, часть изображения карты высот
+    const size_t SX2 = SX1;
+    const size_t SY2 = SY1;
+    const size_t clearness2 = clearness1;
+    const size_t SZ2 = SX2 * clearness2;
+    typedef ScaleBitMap< SX2, SY2, SZ2 >  sbm2_t;
+
     // *каждая* ячейка верхнего слоя содержит SX2 * SY2 * SZ2 ячеек нижнего, поэтому:
     //   - два слоя содержат (SX2 * SY2 * SZ2) * (SX1 * SY1 * SZ1) ячеек
     //   - нижний слой в (SX2, SY2, SZ2) раз подробнее верхнего
@@ -222,16 +226,13 @@ int main( int argc, char** argv ) {
     // указываем ячейку на верхнем слое, которую хотим отразить в нижнем
     // @todo Добавить правильное формирование частичной карты высот в зависимости от указанной высоты/глубины.
     const typelib::coordInt_t cA( 0, 0, 0 );
-    // рассчитываем смещение и размер области в изобр.-источнике карты высот
+    // рассчитываем смещение и размер области в изображении-источнике карты высот
     const typelib::coordInt_t shiftB = cA + sbm2_t::bm_t::maxCoord();
     const typelib::psizeInt_t sizeB( sizeImage / SX2,  sizeImage / SY2,  0u );
     b << ElevationMap< SX1, SY1, SZ1 >(
         source, scaleXY, hMin, hMax, true,
         shiftB, sizeB
     );
-
-    // получаем образ верхнего слоя
-    sbm1_t::bm_t bmA = a.draw();
 
     // получаем образ нижнего слоя
     sbm2_t::bm_t bmB = b.draw();
@@ -297,7 +298,7 @@ int main( int argc, char** argv ) {
     o[ "rgba" ] = 0x00000000;
     //o[ "rgba" ] = 0xFFFFFFFF;
 
-#if 0
+#if 1
     io::VolumeVTKVisual visualA( o );
     visualA << bmA;
     visualA.wait();

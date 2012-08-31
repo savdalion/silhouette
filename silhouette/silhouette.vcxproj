@@ -69,7 +69,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\configure.h" />
+    <ClInclude Include="configure.h" />
+    <ClInclude Include="include\shape\Sphere.h" />
     <ClInclude Include="include\io\SurfaceVTKVisual.h" />
     <ClInclude Include="include\io\VolumeVTKVisual.h" />
     <ClInclude Include="include\ScaleBitMap.h" />
@@ -77,8 +78,10 @@
     <ClInclude Include="include\shape\ElevationMap.h" />
     <ClInclude Include="include\shape\Ellipsoid.h" />
     <ClInclude Include="include\shape\Shape.h" />
+    <ClInclude Include="silhouette.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="include\shape\Sphere.inl" />
     <None Include="include\io\VolumeVTKVisual.inl">
       <FileType>Document</FileType>
     </None>

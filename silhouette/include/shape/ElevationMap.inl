@@ -375,8 +375,8 @@ typename siu::shape::ElevationMap< Grid >::bm_t siu::shape::ElevationMap< Grid >
 
 template< size_t SX, size_t SY, size_t SZ >
 typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()() {
-    // Самый простой способ - привести изображение к размеру Grid: т.о.
-    // мы без лишних хлопот получим хорошо усреднённую карту высот
+    // Приводим изображение к размеру Grid: т.о. мы без лишних хлопот
+    // получим хорошо усреднённую карту высот
 
     // @use http://graphicsmagick.org/Magick++/Image.html
 
@@ -395,7 +395,7 @@ typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()
         imageSizeHeight = wrapper.image.size().height();
 
         if (wrapper.image.colorSpace() != Magick::GRAYColorspace) {
-            // @source http://www.imagemagick.org/Magick++/Image.html
+            // @source http://imagemagick.org/Magick++/Image.html
             wrapper.image.quantizeColorSpace( Magick::GRAYColorspace );
             wrapper.image.quantizeColors( 256 );
             wrapper.image.quantize();
@@ -536,8 +536,12 @@ typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()
     /* - @todo Правильно?
     const float scaleZ = static_cast< float >( vH ) / (khMax - khMin);
     */
-    const float scaleZ = (khMax - khMin) / static_cast< float >( imageSizeWidth )
+    const float scaleZ = (khMax - khMin) / static_cast< float >( SZ )
         * (static_cast< float >( SZ ) / static_cast< float >( SX ));
+    /*
+    const float scaleZ = static_cast< float >( vH ) / (khMax - khMin)
+        * (static_cast< float >( SX ) / static_cast< float >( SZ ));
+    */
 
     const typelib::coordInt_t S( SX, SY, SZ );
     const typelib::coord_t inOneG = sizeGrid();

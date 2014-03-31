@@ -70,7 +70,7 @@ public:
     * Верхний левый угол и размер области, которая будет учтена в 'source'.
     */
     const typelib::coordInt_t shiftArea;
-    const typelib::psizeInt_t sizeArea;
+    const typelib::sizeInt_t sizeArea;
 
 
 
@@ -87,7 +87,7 @@ public:
         T hMin, T hMax,
         bool fill,
         const typelib::coordInt_t& shiftArea = typelib::coordInt_t::UNDEFINED(),
-        const typelib::psizeInt_t& sizeArea = typelib::psizeInt_t::ONE()
+        const typelib::sizeInt_t& sizeArea = typelib::sizeInt_t::ONE()
     );
 
 

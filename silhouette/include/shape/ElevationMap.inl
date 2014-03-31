@@ -10,7 +10,7 @@ inline ElevationMap< SX, SY, SZ >::ElevationMap(
     T hMin, T hMax,
     bool fill,
     const typelib::coordInt_t& shiftArea,
-    const typelib::psizeInt_t& sizeArea
+    const typelib::sizeInt_t& sizeArea
 ) :
     source( source ),
     scaleXY( static_cast< float >( scaleXY ) ),
@@ -32,7 +32,7 @@ inline ElevationMap< SX, SY, SZ >::ElevationMap(
         && "Минимальная высота не может превышать максимальную." );
     assert( ( shiftArea.undefined() || (shiftArea >= typelib::coordInt_t::ZERO()) )
         && "Смещение области карты высот должно задаваться положительными координатами." );
-    assert( ( (sizeArea.sx > 0) && (sizeArea.sy > 0) )
+    assert( ( (sizeArea.x > 0) && (sizeArea.y > 0) )
         && "Размер области должен быть задан." );
 }
 
@@ -449,12 +449,12 @@ typename ElevationMap< SX, SY, SZ >::bm_t ElevationMap< SX, SY, SZ >::operator()
     const bool hasArea = !shiftArea.undefined();
     Magick::Geometry cropGeometry( 0, 0, 0, 0 );
     if ( hasArea ) {
-        assert( ((shiftArea.x + sizeArea.sx) < static_cast< int >( imageSizeWidth ))
+        assert( ((shiftArea.x + sizeArea.x) < static_cast< int >( imageSizeWidth ))
             && "Область обрезки изображения по X за пределами границ изображения." );
-        assert( ((shiftArea.y + sizeArea.sy) < static_cast< int >( imageSizeHeight ))
+        assert( ((shiftArea.y + sizeArea.y) < static_cast< int >( imageSizeHeight ))
             && "Область обрезки изображения по Y за пределами границ изображения." );
         cropGeometry =
-            Magick::Geometry( shiftArea.x, shiftArea.y,  sizeArea.sx, sizeArea.sy );
+            Magick::Geometry( shiftArea.x, shiftArea.y,  sizeArea.x, sizeArea.y );
     }
 
     // изображение (или его часть) всегда приводится к размеру сетки
